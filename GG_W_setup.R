@@ -5,17 +5,32 @@ library(data.table)
 
 source("My_R_code/file_backed_mat.R")
 
-print("Loading data")
-admixedVCF = fread(file = "Data/loter/Run 3/Loter input 3/admixed_phased3.vcf.gz",
-                   key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
-innerVCF = fread(file = "Data/loter/Run 3/Loter input 3/inner_phased3.vcf.gz",
-                 key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
-outerVCF = fread(file = "Data/loter/Run 3/Loter input 3/outer_phased3.vcf.gz",
-                 key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
-otherVCF = fread(file = "Data/loter/Run 3/Loter input 3/other_phased3.vcf.gz",
-                 key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
+loter_run = 4
 
-fullVCF = merge(innerVCF, merge(outerVCF, merge(otherVCF, admixedVCF)))
+print("Loading data")
+admixedVCF = 
+  fread(file = paste0("Data/loter/Run ", loter_run,
+               "/Loter input ", loter_run,
+               "/admixed_phased", loter_run, ".vcf.gz"),
+        key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
+innerVCF = 
+  fread(file = paste0("Data/loter/Run ", loter_run,
+               "/Loter input ", loter_run, 
+               "/inner_phased", loter_run, ".vcf.gz"),
+        key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
+outerVCF = 
+  fread(file = paste0("Data/loter/Run ", loter_run,
+                      "/Loter input ", loter_run,
+                      "/outer_phased", loter_run, ".vcf.gz"),
+        key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
+otherVCF = 
+  fread(file = paste0("Data/loter/Run ", loter_run,
+                      "/Loter input ", loter_run, 
+                      "/other_phased", loter_run, ".vcf.gz"),
+        key = "#CHROM,POS,ID,REF,ALT,QUAL,FILTER,INFO,FORMAT")
+
+fullVCF = 
+  merge(innerVCF, merge(outerVCF, merge(otherVCF, admixedVCF)))
 print("Merge complete.")
 
 inds = colnames(fullVCF)[-(1:9)]
@@ -36,7 +51,7 @@ W = BGData(pheno = data.frame(ID = inds),
                                        2 * numSNPs,
                                        outputType = "logical",
                                        folderOut = paste0(
-                                         "Data/loter/Run 3/W")))
+                                         "Data/loter/Run ", loter_run, "/W")))
 
 for (ind in 10:(9 + length(inds))) {
   W@geno[ind - 9, SNPs1] = sapply(fullVCF[, ..ind],
@@ -45,14 +60,12 @@ for (ind in 10:(9 + length(inds))) {
                              function(x) as.numeric(grepl("1$", x)))
 }
 
-print("hei")
-
 colnames(W@geno) = do.call("paste0",
                            c(list(rep(fullVCF$ID, each = 2)),
                              "_",
                              list(1:2)))
 
-save(W, file = paste0("Data/loter/Run 3/W/W.RData"))
+save(W, file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
 
 #################### Old way, writing to txt files ################
 
