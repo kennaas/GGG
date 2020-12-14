@@ -113,7 +113,7 @@ if (usePed) {
   outerDelta = delta
   dimnames(outerDelta) = dimnames(outerGRM)
   
-  load(paste0("Runs/GRMs/GRM_rio", 3, "_Other.RData"))
+  load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Other.RData"))
   if (GRMVariant == "GCTA1") {
     otherGRM = G_GCTA1
   } else if (GRMVariant == "GCTA2") {
