@@ -126,7 +126,8 @@ if (usePed) {
   dimnames(otherDelta) = dimnames(otherGRM)
   
   rm(G_VR)
-  rm(G_GCTA)
+  rm(G_GCTA1)
+  rm(G_GCTA2)
   rm(pi)
   rm(delta)
 }
