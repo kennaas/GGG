@@ -10,19 +10,41 @@ library(INLA)
 
 ######################## Load results #############################
 
-# load("Runs/mass/inla_result_mass_generalized_yang_alpha_-1 (different prior!).RData")
-# model1 = model
-# load("Runs/mass/inla_result_mass_generalized_yang_alpha_-1.RData")
-# model2 = model
+response = "mass"
 
-load("Runs/mass/inla_result_hetGG_rio3_VR_mass.RData")
-modelrio = model
-# load("Runs/wing/inla_result_hetGG_rio1__full_wing.RData")
-# modelriofull = model
-load("Runs/mass/inla_result_hetGG_pedigree_mass.RData")
-modelped = model
-# load("Runs/wing/inla_result_hetGG_pedigree__full_wing.RData")
-# modelpedfull = model
+######################## Prior sensitivity analysis ###############
+
+load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, ".RData"))
+modelmoderate = model
+load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, "_strictprior.RData"))
+modelstrict = model
+load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, "_kindprior.RData"))
+modelkind = model
+
+load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_", response, ".RData"))
+modelpedmoderate = model
+load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_", response, "_strictprior.RData"))
+modelpedstrict = model
+load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_", response, "_kindprior.RData"))
+modelpedkind = model
+
+
+modelmoderate$summary.fixed
+modelkind$summary.fixed
+modelstrict$summary.fixed
+modelmoderate$variance
+modelkind$variance
+modelstrict$variance
+
+modelpedmoderate$summary.fixed
+modelpedkind$summary.fixed
+modelpedstrict$summary.fixed
+modelpedmoderate$variance
+modelpedkind$variance
+modelpedstrict$variance
+
+
+######################### Legarra scaling #######################
 
 # Load rio Gs
 # load("Runs/GRMs/GRM_rio_Inner.RData")
@@ -34,35 +56,6 @@ modelped = model
 
 #Load partial relatedness matrices
 # load("Runs/morphData_pedigree_het_version.RData")
-
-######################## INLA result analysis #####################
-
-# inlaPostVariances = function(marginal){
-#   sigmaMarg = inla.tmarginal(function(x) 1 / x, marginal)
-#   summaryStats =
-#     inla.zmarginal(sigmaMarg, silent = TRUE)[c(1, 5, 3, 7)]
-#   summaryStats = round(as.numeric(summaryStats), digits = 2)
-#   names(summaryStats) = c("mean", "mode", "2.5%", "97.5%")
-#   return(summaryStats)
-# }
-# 
-# variances = do.call(
-#   "rbind", lapply(modelrio$marginals.hyperpar, inlaPostVariances))
-# rownames(variances) =
-#   gsub("Precision", "Variance", rownames(variances))
-# modelrio$variances = variances
-
-
-modelrio$summary.fixed
-# modelriofull$summary.fixed
-modelped$summary.fixed
-# modelpedfull$summary.fixed
-modelrio$variances
-# modelriofull$variances
-modelped$variances
-# modelpedfull$variances
-
-# # Legarra scaling
 # innerGRM_reduced = innerGRM[colnames(innerGRM) %in% morphData$ringnr,
 #                             colnames(innerGRM) %in% morphData$ringnr]
 # 
