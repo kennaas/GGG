@@ -390,7 +390,7 @@ if (usePed) {
   }
 }
 
-model = inla(formula = s, family = "gaussian",
+model01 = inla(formula = s, family = "gaussian",
              data = morphData, verbose = TRUE,
              control.inla = list(h = h_val),
              control.family = list(
@@ -399,8 +399,8 @@ model = inla(formula = s, family = "gaussian",
                                          param=c(1, 0.05)))))#,
 #             control.compute=list(dic = T, config = TRUE))
 if (iterate) {
-  model = inla.rerun(model)
-  model = inla.rerun(model)
+  model02 = inla.rerun(model01)
+  model = inla.rerun(model02)
 }
   
 
@@ -436,4 +436,4 @@ if (segregation) {
 if (!shrink)
   path = paste0(path, "_full_")
 
-save(model, file = paste0(path, response, "h=", h_val, ".RData"))
+save(model01, model02, model, file = paste0(path, response, "h=", h_val, ".RData"))
