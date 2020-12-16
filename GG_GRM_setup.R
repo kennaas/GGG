@@ -1,10 +1,12 @@
+if (!require(Matrix)) install.packages("Matrix")
 library(Matrix)
 if (!require(data.table)) install.packages("data.table")
 library(data.table)
+if (!require(BGData)) install.packages("BGData")
 library(BGData)
 source("My_R_code/file_backed_mat.R")
 
-group = "Inner"
+group = "Other"
 loter_run = 4
 
 load.BGData(file = paste0("Data/loter/Run ", loter_run,
@@ -20,8 +22,8 @@ inds = W@pheno$ID
 
 ######################## Find pi ##################################
 
-pi = chunkedApply(get(paste0("A", group))@geno, 1, mean,
-                  nCores = cores, verbose = TRUE)
+pi = chunkedApply(get(paste0("A", group))@geno, MARGIN = 1, mean,
+                  nCores = cores, verbose = TRUE, chunkSize = 250L)
 
 ######################## Finding f ################################
 
