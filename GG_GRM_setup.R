@@ -1,12 +1,16 @@
 library(Matrix)
+if (!require(data.table)) install.packages("data.table")
 library(data.table)
 library(BGData)
 source("My_R_code/file_backed_mat.R")
 
-group = "Other"
+group = "Inner"
+loter_run = 4
 
-load.BGData(file = "Data/loter/Run 3/W/W.RData")
-load.BGData(file = paste0("Data/loter/Run 3/A", group, "/A", group, ".RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run,
+                          "/W/W.RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run, 
+                          "/A", group, "/A", group, ".RData"))
 
 cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, 8)
 
@@ -14,19 +18,17 @@ numInds = dim(W@geno)[1]
 numSNPs = dim(W@geno)[2] / 2
 inds = W@pheno$ID
 
-V = BGData(geno = initFileBackedMatrix(
-  numInds, 2 * numSNPs,  
-  folderOut = paste0("Data/loter/Run 3/V", group),
-  outputType = "double"), pheno = data.frame(ID = inds))
-
 ######################## Find pi ##################################
 
-pi = chunkedApply(get(paste0("A", group))@geno, 1, mean, nCores = cores)
+pi = chunkedApply(get(paste0("A", group))@geno, 1, mean,
+                  nCores = cores)
 
 ######################## Finding f ################################
 
 WA = initFileBackedMatrix(numInds, 2 * numSNPs,
-                          folderOut = paste0("Data/loter/Run 3/WA", group),
+                          folderOut = paste0("Data/loter/Run", 
+                                             loter_run, "/WA",
+                                             group),
                           outputType = "boolean")
 
 for (ind in 1:numInds) {
@@ -51,11 +53,20 @@ f_numerator =
 f = f_numerator / f_denominator
 
 rm(WA)
-unlink(paste0("Data/loter/Run 3/WA", group))
+unlink(paste0("Data/loter/Run ", loter_run, "/WA", group, 
+              "/geno_1.bin"), 
+         recursive = TRUE)
+unlink(paste0("Data/loter/Run ", loter_run, "/WA", group), 
+       recursive = TRUE)
 rm(f_numerator)
 rm(f_denominator)
 
 ###################### Find V #####################################
+
+V = BGData(geno = initFileBackedMatrix(
+  numInds, 2 * numSNPs,  
+  folderOut = paste0("Data/loter/Run ", loter_run, "/V", group),
+  outputType = "double"), pheno = data.frame(ID = inds))
 
 for (ind in 1:numInds) {
   row = get(paste0("A", group))@geno[ind, ] * (W@geno[ind, ] - rep(f, each = 2))
@@ -68,11 +79,13 @@ for (ind in 1:numInds) {
 # VR-version
 s = 1 / sqrt((rep(f, each = 2) * (1 - rep(f, each = 2))))
 
-alpha_denominator_VR = getG(get(paste0("A", group))@geno, center = FALSE, scale = s, 
+alpha_denominator_VR = getG(get(paste0("A", group))@geno, 
+                            center = FALSE, scale = s, 
                          scaleG = FALSE, nCores = cores, 
                          verbose = TRUE)
 
-alpha_num_VR = getG(V@geno, center = FALSE, scale = FALSE, scaleG = FALSE,
+alpha_num_VR = getG(V@geno, 
+                    center = FALSE, scale = FALSE, scaleG = FALSE,
          nCores = cores, verbose = TRUE)
 
 alpha_denominator_VR = ifelse(alpha_denominator_VR == 0,
@@ -86,16 +99,22 @@ alpha_GCTA1 = getG(V@geno, center = FALSE, scale = 1 / s,
                   scaleG = TRUE, nCores = cores, verbose = TRUE)
 
 rm(V)
-unlink(paste0("Data/loter/Run 3/V", group), recursive = TRUE)
+unlink(paste0("Data/loter/Run ", loter_run, "/V", group, 
+              "/geno_1.bin"), 
+       recursive = TRUE)
+unlink(paste0("Data/loter/Run ", loter_run, "/V", group), 
+       recursive = TRUE)
 
 # GCTA - version 2 (only mult. by theta)
 
-alpha_GCTA2 = getG(W@geno, center = rep(f, each = 2), scale = 1 / s, 
+alpha_GCTA2 = getG(W@geno, 
+                   center = rep(f, each = 2), scale = 1 / s, 
                    scaleG = TRUE, nCores = cores, verbose = TRUE)
 
 ###################### Find theta #################################
 
-theta = getG(get(paste0("A", group))@geno, center = FALSE, scale = FALSE, scaleG = FALSE,
+theta = getG(get(paste0("A", group))@geno, 
+             center = FALSE, scale = FALSE, scaleG = FALSE,
              nCores = cores, verbose = TRUE) 
 theta = theta / (2 * numSNPs)
 
@@ -118,5 +137,6 @@ dimnames(G_GCTA1)[[1]] = dimnames(G_GCTA1)[[2]] = inds
 dimnames(G_GCTA2)[[1]] = dimnames(G_GCTA2)[[2]] = inds
 
 save(G_VR, G_GCTA1, G_GCTA2, delta, pi,
-     file = paste0("Runs/GRMs/GRM_rio3_", group, ".RData"))
+     file = paste0("Runs/GRMs/GRM_rio", loter_run, 
+                   "_", group, ".RData"))
 
