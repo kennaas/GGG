@@ -140,9 +140,9 @@ AInv_other@Dimnames = A_other@Dimnames = A@Dimnames
 
 ###################################################################
 
-save(A_inner, AInv_inner,
-     A_outer, AInv_outer, 
-     A_other, AInv_other, 
+save(A_inner,# AInv_inner,
+     A_outer,# AInv_outer, 
+     A_other,# AInv_other, 
      file = "Runs/A_hetped.RData")
 
 

@@ -21,7 +21,7 @@ inds = W@pheno$ID
 ######################## Find pi ##################################
 
 pi = chunkedApply(get(paste0("A", group))@geno, 1, mean,
-                  nCores = cores)
+                  nCores = cores, verbose = TRUE)
 
 ######################## Finding f ################################
 
@@ -32,10 +32,8 @@ WA = initFileBackedMatrix(numInds, 2 * numSNPs,
                           outputType = "boolean")
 
 for (ind in 1:numInds) {
-  row = W@geno[ind, ] * get(paste0("A", group))@geno[ind, ]
-  WA[ind, ] = row
-  print(paste0("Subject ", ind, " / ", numInds, " ",
-               all(WA[ind, ] == row)))
+  WA[ind, ] = W@geno[ind, ] * get(paste0("A", group))@geno[ind, ]
+  print(paste0("Subject ", ind, " / ", numInds))
 }
 
 f_denominator = chunkedApply(get(paste0("A", group))@geno, 2, sum, 
@@ -69,9 +67,8 @@ V = BGData(geno = initFileBackedMatrix(
   outputType = "double"), pheno = data.frame(ID = inds))
 
 for (ind in 1:numInds) {
-  row = get(paste0("A", group))@geno[ind, ] * (W@geno[ind, ] - rep(f, each = 2))
-  V@geno[ind, ] = row
-  print(paste0("Subject ", ind, " / ", numInds, " ", all(V@geno[ind, ] == row)))
+  V@geno[ind, ] = get(paste0("A", group))@geno[ind, ] * (W@geno[ind, ] - rep(f, each = 2))
+  print(paste0("Subject ", ind, " / ", numInds))
 }
 
 ##################### Find alpha ##################################
@@ -128,13 +125,15 @@ G_VR = alpha_VR * theta
 G_GCTA1 = alpha_GCTA1 * theta
 G_GCTA2 = alpha_GCTA2 * theta
 
-solve(G_VR + diag(0.01, numInds, numInds))
-solve(G_GCTA1 + diag(0.01, numInds, numInds))
-solve(G_GCTA2 + diag(0.01, numInds, numInds))
-
-dimnames(G_VR)[[1]] = dimnames(G_VR)[[2]] = inds
-dimnames(G_GCTA1)[[1]] = dimnames(G_GCTA1)[[2]] = inds
-dimnames(G_GCTA2)[[1]] = dimnames(G_GCTA2)[[2]] = inds
+print("G_VR invertible:")
+all(eigen(G_VR + diag(0.01, numInds, numInds),
+          only.values = TRUE)$values > 0)
+print("G_GCTA1 invertible:")
+all(eigen(G_GCTA1 + diag(0.01, numInds, numInds),
+          only.values = TRUE)$values > 0)
+print("G_GCTA2 invertible:")
+all(eigen(G_GCTA2 + diag(0.01, numInds, numInds),
+          only.values = TRUE)$values > 0)
 
 save(G_VR, G_GCTA1, G_GCTA2, delta, pi,
      file = paste0("Runs/GRMs/GRM_rio", loter_run, 
