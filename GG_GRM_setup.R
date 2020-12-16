@@ -26,7 +26,7 @@ pi = chunkedApply(get(paste0("A", group))@geno, 1, mean,
 ######################## Finding f ################################
 
 WA = initFileBackedMatrix(numInds, 2 * numSNPs,
-                          folderOut = paste0("Data/loter/Run", 
+                          folderOut = paste0("Data/loter/Run ", 
                                              loter_run, "/WA",
                                              group),
                           outputType = "boolean")
