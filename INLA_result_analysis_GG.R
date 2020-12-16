@@ -8,11 +8,8 @@ if (!require(INLA))
     dep=TRUE)
 library(INLA)
 
-######################## Load results #############################
-
-response = "mass"
-
 ######################## Prior sensitivity analysis ###############
+response = "wing"
 
 load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, ".RData"))
 modelmoderate = model
@@ -43,16 +40,40 @@ modelpedmoderate$variance
 modelpedkind$variance
 modelpedstrict$variance
 
+rm(list = ls())
+
+######################### Run times ###############################
+response = "wing"
+
+load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, ".RData"))
+summary(model01)
+summary(model02)
+summary(model)
+
+riomodel = model
+
+load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_", response, ".RData"))
+summary(model01)
+summary(model02)
+summary(model)
+
+pedmodel = model
+
+rm(model)
+rm(model01)
+rm(model02)
 
 ######################### Legarra scaling #######################
 
+response = "wing"
+
 # Load rio Gs
-# load("Runs/GRMs/GRM_rio_Inner.RData")
-# innerGRM = G
-# load("Runs/GRMs/GRM_rio_Outer.RData")
-# outerGRM = G
-# load("Runs/GRMs/GRM_rio_Other.RData")
-# otherGRM = G
+load("Runs/GRMs/GRM_rio3_Inner.RData")
+innerGRM = G_VR
+load("Runs/GRMs/GRM_rio3_Outer.RData")
+outerGRM = G_VR
+load("Runs/GRMs/GRM_rio3_Other.RData")
+otherGRM = G_VR
 
 #Load partial relatedness matrices
 # load("Runs/morphData_pedigree_het_version.RData")
