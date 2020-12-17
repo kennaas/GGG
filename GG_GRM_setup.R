@@ -127,6 +127,12 @@ G_VR = alpha_VR * theta
 G_GCTA1 = alpha_GCTA1 * theta
 G_GCTA2 = alpha_GCTA2 * theta
 
+dimnames(G_VR)[[1]] = dimnames(G_VR)[[2]] =
+  dimnames(G_GCTA1)[[1]] = dimnames(G_GCTA1)[[2]] = 
+  dimnames(G_GCTA2)[[1]] = dimnames(G_GCTA2)[[2]] =
+  dimnames(delta)[[1]] = dimnames(delta)[[2]] =
+  inds
+
 print("G_VR invertible:")
 all(eigen(G_VR + diag(0.01, numInds, numInds),
           only.values = TRUE)$values > 0)
