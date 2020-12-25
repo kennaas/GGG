@@ -18,12 +18,10 @@ library(INLA)
 
 load("Runs/wing/inla_result_wing_vanRaden.RData")
 model1 = model
-load("Runs/wing/inla_result_wing_vanRaden (not maf, just af).RData")
-model2 = model
 load("Runs/wing/inla_result_wing_vanRaden_impute.RData")
+model2 = model
+load("Runs/wing/inla_result_wing_pedigree.RData")
 model3 = model
-
-load("Runs/mass/inla_result_mass_pedigree (different prior!).RData")
 
 # Load rio Gs
 # load("Runs/GRMs/GRM_rio_Inner.RData")

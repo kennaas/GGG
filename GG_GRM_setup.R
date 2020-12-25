@@ -45,7 +45,7 @@ f_denominator =
                 (seq_along(f_denominator) - 1) %/% 2, sum))
 
 f_numerator = chunkedApply(WA, 2, sum,
-                            nCores = cores, verbose = TRUE)
+                           nCores = cores, verbose = TRUE)
 f_numerator =
   unname(tapply(f_numerator,
                 (seq_along(f_numerator) - 1) %/% 2, sum))
@@ -55,7 +55,7 @@ f = f_numerator / f_denominator
 rm(WA)
 unlink(paste0("Data/loter/Run ", loter_run, "/WA", group, 
               "/geno_1.bin"), 
-         recursive = TRUE)
+       recursive = TRUE)
 unlink(paste0("Data/loter/Run ", loter_run, "/WA", group), 
        recursive = TRUE)
 rm(f_numerator)
@@ -80,22 +80,22 @@ s = 1 / sqrt((rep(f, each = 2) * (1 - rep(f, each = 2))))
 
 alpha_denominator_VR = getG(get(paste0("A", group))@geno, 
                             center = FALSE, scale = s, 
-                         scaleG = FALSE, nCores = cores, 
-                         verbose = TRUE)
+                            scaleG = FALSE, nCores = cores, 
+                            verbose = TRUE)
 
 alpha_num_VR = getG(V@geno, 
                     center = FALSE, scale = FALSE, scaleG = FALSE,
-         nCores = cores, verbose = TRUE)
+                    nCores = cores, verbose = TRUE)
 
 alpha_denominator_VR = ifelse(alpha_denominator_VR == 0,
-                           1e-12, alpha_denominator_VR)
+                              1e-12, alpha_denominator_VR)
 alpha_VR = alpha_num_VR / alpha_denominator_VR
 
 
 # GCTA - version 1 (local ancestries in num and mult. by theta)
 
 alpha_GCTA1 = getG(V@geno, center = FALSE, scale = 1 / s, 
-                  scaleG = TRUE, nCores = cores, verbose = TRUE)
+                   scaleG = TRUE, nCores = cores, verbose = TRUE)
 
 rm(V)
 unlink(paste0("Data/loter/Run ", loter_run, "/V", group, 

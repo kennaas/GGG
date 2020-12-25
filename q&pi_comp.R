@@ -38,34 +38,3 @@ comp = cbind(
   pi_mat[, c(2, 1, 3)])
 
 save(comp, file = "Runs/q&pi_comp3.RData")
-############################### Analysis ##########################
-library(knitr)
-load(file = "Runs/morphData_pedigree_version.RData")
-load(file = "Runs/q&pi_comp3.RData")
-load(file = "Data/Founders3/founders.RData")
-head(comp)
-kable(comp)
-
-scatterplot_fun = function(name, ped, la) {
-  plot(ped, la, pch = 20, 
-       main = paste0("Scatterplot: ", name, " group proportions"),
-       xlab = "Pedigree-based", ylab = "Local ancestry-based",
-       xlim = c(0,1), ylim = c(0,1))
-}
-
-pop_comp = function(pop, comp) {
-  comp_temp = comp[comp$ringnr %in% pop, ]
-  scatterplot_fun("inner", comp_temp$inner, comp_temp$pi_inner)
-  scatterplot_fun("outer", comp_temp$outer, comp_temp$pi_outer)
-  scatterplot_fun("other", comp_temp$other, comp_temp$pi_other)
-  
-  print(dim(comp_temp)[1])
-  
-  c(cor(comp_temp$inner, comp_temp$pi_inner), 
-    cor(comp_temp$outer, comp_temp$pi_outer), 
-    cor(comp_temp$other, comp_temp$pi_other)) 
-}
-
-pop_comp(admixedInds[admixedInds %in% morphData$ringnr], comp)
-
-

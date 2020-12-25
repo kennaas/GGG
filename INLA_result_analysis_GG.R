@@ -63,64 +63,20 @@ rm(model)
 rm(model01)
 rm(model02)
 
-######################### Legarra scaling #######################
+############# Using all genotyped (3) vs. only phenotyped (4) #####
 
-response = "wing"
+response = "tarsus"
 
-# Load rio Gs
-load("Runs/GRMs/GRM_rio3_Inner.RData")
-innerGRM = G_VR
-load("Runs/GRMs/GRM_rio3_Outer.RData")
-outerGRM = G_VR
-load("Runs/GRMs/GRM_rio3_Other.RData")
-otherGRM = G_VR
+load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, ".RData"))
 
-#Load partial relatedness matrices
-# load("Runs/morphData_pedigree_het_version.RData")
-# innerGRM_reduced = innerGRM[colnames(innerGRM) %in% morphData$ringnr,
-#                             colnames(innerGRM) %in% morphData$ringnr]
-# 
-# outerGRM_reduced = outerGRM[colnames(outerGRM) %in% morphData$ringnr,
-#                             colnames(outerGRM) %in% morphData$ringnr]
-# 
-# otherGRM_reduced = otherGRM[colnames(otherGRM) %in% morphData$ringnr,
-#                             colnames(otherGRM) %in% morphData$ringnr]
-# 
-# innerGRM_reduced = innerGRM_reduced[diag(innerGRM_reduced) != 0,
-#                                     diag(innerGRM_reduced) != 0]
-# outerGRM_reduced = outerGRM_reduced[diag(outerGRM_reduced) != 0,
-#                                     diag(outerGRM_reduced) != 0]
-# otherGRM_reduced = otherGRM_reduced[diag(otherGRM_reduced) != 0,
-#                                     diag(otherGRM_reduced) != 0]
-# 
-# k_rio_inner = mean(diag(innerGRM_reduced)) - mean(innerGRM_reduced)
-# k_rio_outer = mean(diag(outerGRM_reduced)) - mean(outerGRM_reduced)
-# k_rio_other = mean(diag(otherGRM_reduced)) - mean(otherGRM_reduced)
-# 
-# k_rio = rbind(k_rio_inner, k_rio_outer, k_rio_other)
-# 
-# A_inner_reduced = A_inner[colnames(A_inner) %in% morphData$id,
-#                           colnames(A_inner) %in% morphData$id]
-# 
-# A_outer_reduced = A_outer[colnames(A_outer) %in% morphData$id,
-#                           colnames(A_outer) %in% morphData$id]
-# 
-# A_other_reduced = A_other[colnames(A_other) %in% morphData$id,
-#                           colnames(A_other) %in% morphData$id]
-# 
-# A_inner_reduced = A_inner_reduced[diag(A_inner_reduced) != 0,
-#                                   diag(A_inner_reduced) != 0]
-# A_outer_reduced = A_outer_reduced[diag(A_outer_reduced) != 0,
-#                                   diag(A_outer_reduced) != 0]
-# A_other_reduced = A_other_reduced[diag(A_other_reduced) != 0,
-#                                   diag(A_other_reduced) != 0]
-# 
-# k_ped_inner = mean(diag(A_inner_reduced)) - mean(A_inner_reduced)
-# k_ped_outer = mean(diag(A_outer_reduced)) - mean(A_outer_reduced)
-# k_ped_other = mean(diag(A_other_reduced)) - mean(A_other_reduced)
-# k_ped = rbind(k_ped_inner, k_ped_outer, k_ped_other)
-# 
-# 
-# 
-# apply(modelrio$variances[4:6,], 2, function(x) x * k_rio)
-# apply(modelped$variances[4:6,], 2, function(x) x * k_ped)
+model3 = model
+
+load(paste0("Runs/", response, "/inla_result_hetGG_rio4_VR_", response, ".RData"))
+
+model4 = model
+
+model3$summary.fixed - model4$summary.fixed
+
+model3$variances - model4$variances
+
+# all responses: barely effects results -> safe to use smaller data (faster) data set?
