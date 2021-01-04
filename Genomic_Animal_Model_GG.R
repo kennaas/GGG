@@ -379,6 +379,7 @@ s = reformulate(effects, response = response)
 
 # Find inverse of G (or A)
 if (usePed) {
+  # Round for INLA-reasons...
   innerCmatrix = round(solve(A_inner), 5) # round(AInv_inner, 5)
   outerCmatrix = round(solve(A_outer), 5) # round(AInv_outer, 5)
   otherCmatrix = round(solve(A_other), 5) # round(AInv_other, 5)
@@ -408,7 +409,8 @@ if (usePed) {
   }
 }
 
-model01 = inla(formula = s, family = "gaussian",
+# First INLA run
+model = inla(formula = s, family = "gaussian",
              data = morphData, verbose = TRUE,
              control.inla = list(h = h_val),
              control.family = list(
@@ -417,11 +419,12 @@ model01 = inla(formula = s, family = "gaussian",
                                          param=c(1, 0.05)))))#,
 #             control.compute=list(dic = T, config = TRUE))
 if (iterate) {
+  model01 = model
   model02 = inla.rerun(model01)
   model = inla.rerun(model02)
 }
   
-
+# Transform precisions to variances and store for easy access
 inlaPostVariances = function(marginal){
   sigmaMarg = inla.tmarginal(function(x) 1 / x, marginal)
   summaryStats =
@@ -437,7 +440,7 @@ rownames(variances) =
   gsub("Precision", "Variance", rownames(variances))
 model$variances = variances
 
-
+# Save model results with an informative name
 path = "Runs/inla_result_hetGG"
 
 if (usePed) {
@@ -454,4 +457,10 @@ if (segregation) {
 if (!shrink)
   path = paste0(path, "_full_")
 
-save(model01, model02, model, file = paste0(path, response, "h=", h_val, ".RData"))
+if (iterate) {
+  save(model01, model02, model, 
+       file = paste0(path, response, "h=", h_val, ".RData"))
+} else {
+  save(model, 
+       file = paste0(path, response, "h=", h_val, ".RData"))
+}
