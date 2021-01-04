@@ -13,7 +13,20 @@ library(optparse)
 
 ######################## Options ##################################
 
-# Arguments: Response, GRMVariant, alpha, usePedigree
+# List of options for running from command line
+# Response: "wing", "mass" or "tarsus"
+# GRMVariant: "VR" or "GCTA". VR is recommended, GCTA is not tested
+# UsePedigree: TRUE/FALSE on whether to use pedigree-based model. 
+  # FALSE (default) means to use genome-based model.
+# Iterate: TRUE/FALSE on whether to rerun the model. 
+  # TRUE recommended for better stability
+# Shrink: TRUE/FALSE on whether to trim kinship matrices to 
+  # only phenotyped individuals. TRUE recommended, as computations
+  # are sped up and results are not notably affected.
+# Segregation: TRUE/FALSE on whether to attempt to fit segregation
+  # variances as random effect. FALSE recommended for convergence.
+# h-value: choose custom values for the h-parameter in INLA.
+# local_ancestry: which run of loter to apply (3 was used in analysis)
 option_list = list(
   make_option(c("-r", "--response"), type = "character",
               default = "wing", help = "animal model response",
@@ -72,14 +85,6 @@ h_val = opt$h_value
 
 loter_run = opt$local_ancestry
 
-####################### Standardize & center function #############
-
-standCent = function(G) {
-  G = G - mean(G)
-  G = G / mean(diag(G))
-  return(G)
-}
-
 ######################## Load Data ################################
 load(file = "Runs/morphData_pedigree_version.RData")
 load(file = "Runs/pedigree.RData")
@@ -89,6 +94,7 @@ if (usePed) {
   load(file = "Runs/A_hetped.RData")
 } else {
   
+  # Choose type of GRM
   load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Inner.RData"))
   if (GRMVariant == "GCTA1") {
     innerGRM = G_GCTA1
@@ -149,9 +155,10 @@ morphData$ID4 = morphData$ID3 =
 
 if (usePed) {
   if (shrink) {
-    # Keep only relatednesses for individuals with data
+    # Only kinship for individuals with data
     A_inner = A_inner[colnames(A_inner) %in% morphData$ringnr,
                       colnames(A_inner) %in% morphData$ringnr]
+    # Rename dimnames for use in INLA
     dimnames(A_inner)[[1]] = dimnames(A_inner)[[2]] =
       morphData[match(colnames(A_inner), morphData$ringnr), "ID"]
     
@@ -165,6 +172,7 @@ if (usePed) {
     dimnames(A_other)[[1]] = dimnames(A_other)[[2]] =
       morphData[match(colnames(A_other), morphData$ringnr), "ID"]
     
+    # IDs used to fit random effects in INLA
     morphData$ID2 = ifelse(morphData$inner > 0,
                                morphData$ID2, NA)
     
@@ -183,7 +191,7 @@ if (usePed) {
   }
 } else {
   if (shrink) {
-    # Keep only relatednesses for individuals with data
+    # Only keep kinship for individuals with data and rename dims
     
     # Inner
     innerGRM = innerGRM[colnames(innerGRM) %in% morphData$ringnr,
@@ -222,8 +230,8 @@ if (usePed) {
 
 ###################### Make Pos def ###############################
 
-# The function getG() usually gives a pos.def result
-# (per definition: GG^T is pos.def.)
+# Add small value to diagonal of genome-based GRMs
+# and check if matrices are positive semi definite
 
 if (!usePed) {
   N = dim(innerGRM)[1]
@@ -254,16 +262,19 @@ if (shrink) {
   val = "1:numRel"
 }
 
-# Formula
+# Define INLA formula
 
+# Fixed effects
 effects = c("sex", "FGRM", "month", "age")
 
+# Pedigree-based or genome-based genetic effects?
 if (usePed) {
   effects = c(effects, "outer", "other")
 } else {
   effects = c(effects, "outerPi", "otherPi")
 }
 
+# Random effects
 randomEffects = c("f(hatchYear, model = \"iid\", 
                   hyper = list(prec = list(initial = log(10), 
                   prior = \"pc.prec\", param = c(1, 0.05))))",
@@ -297,13 +308,17 @@ randomEffects = c("f(hatchYear, model = \"iid\",
                   prior = \"pc.prec\",
                   param = c(1, 0.05))))"))
 
+# Only when segregation variances are fit:
 if (segregation) {
   morphData$ID7 = morphData$ID6 = morphData$ID5 = morphData$ID4 
   
+  # Definition of S
   innerSeg = (-innerDelta + outerDelta + otherDelta) / 2
   outerSeg = (-outerDelta + innerDelta + otherDelta) / 2
   otherSeg = (-otherDelta + innerDelta + outerDelta) / 2
   
+  
+  # Shrink matrices
   innerSeg = innerSeg[colnames(innerSeg) %in% morphData$ringnr,
                       colnames(innerSeg) %in% morphData$ringnr]
   dimnames(innerSeg)[[1]] = dimnames(innerSeg)[[2]] =
@@ -323,6 +338,7 @@ if (segregation) {
   #outerSeg = outerSeg + diag(1e-12, N, N)
   #otherSeg = otherSeg + diag(1e-12, N, N)
   
+  # Check if matrices are semi def (they are not)
   stopifnot(all(eigen(innerSeg, only.values = TRUE)$values > 0))
   stopifnot(all(eigen(outerSeg, only.values = TRUE)$values > 0))
   stopifnot(all(eigen(otherSeg, only.values = TRUE)$values > 0))
@@ -331,7 +347,7 @@ if (segregation) {
   outerSegInv = solve(outerSeg)
   otherSegInv = solve(otherSeg)
   
-  
+  # Add more random effects
   randomEffects = c(randomEffects, 
                     "f(ID5,values=as.numeric(colnames(innerSegInv)), 
                   model = \"generic0\", Cmatrix = innerSegInv,
@@ -355,8 +371,10 @@ if (segregation) {
                   param = c(2.5, 0.05))))")
 }
 
+# Add random effects to fixed effects
 effects = c(effects, randomEffects)
 
+# Make formula
 s = reformulate(effects, response = response)
 
 # Find inverse of G (or A)
