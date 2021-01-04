@@ -50,32 +50,3 @@ write.table(unique(genotypedInds[!genotypedInds %in% admixedInds]),
 
 save(admixedInds, innerInds, otherInds, outerInds,
      file = "Data/Founders4/founders.RData")
-
-
-################### Founders 3: only based on natal, include unphenotyped ########
-
-# write.table(genotypedInds[!genotypedInds %in% innerInds],
-#             file = "Data/Founders3/NOT_inner_inds.txt",
-#             row.names = FALSE, col.names = FALSE,
-#             quote = FALSE)
-# 
-# write.table(genotypedInds[!genotypedInds %in% outerInds],
-#             file = "Data/Founders3/NOT_outer_inds.txt",
-#             row.names = FALSE, col.names = FALSE,
-#             quote = FALSE)
-# 
-# write.table(genotypedInds[!genotypedInds %in% otherInds],
-#             file = "Data/Founders3/NOT_other_inds.txt",
-#             row.names = FALSE, col.names = FALSE,
-#             quote = FALSE)
-# 
-# admixedInds = genotypedInds[
-#   !genotypedInds %in% c(innerInds, outerInds, otherInds)]
-# 
-# write.table(genotypedInds[!genotypedInds %in% admixedInds],
-#             file = "Data/Founders3/NOT_admixed_inds.txt",
-#             row.names = FALSE, col.names = FALSE,
-#             quote = FALSE)
-# 
-# save(admixedInds, unique(innerInds), unique(otherInds), unique(outerInds),
-#      file = "Data/Founders3/founders.RData")
