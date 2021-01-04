@@ -20,6 +20,8 @@ TInv = solve(T_mat)
 
 ###########################################################
 
+# Eq10 refers to muff et al 2019
+
 pedigreeData$scalingInnerEq10 = pedigreeData$inner
 pedigreeData$scalingOuterEq10 = pedigreeData$outer
 pedigreeData$scalingOtherEq10 = pedigreeData$other
