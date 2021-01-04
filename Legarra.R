@@ -37,10 +37,12 @@ load("Runs/A_hetped.RData")
 
 ######################### Legarra scaling #######################
 
+# Define base populations
 innerBasePop = c(innerInds, admixedInds)
 outerBasePop = c(outerInds, admixedInds)
 otherBasePop = c(otherInds, admixedInds)
 
+# Shrink GRMs to base populations
 innerGRM = innerGRM[colnames(innerGRM) %in% innerBasePop,
                     colnames(innerGRM) %in% innerBasePop]
 outerGRM = outerGRM[colnames(outerGRM) %in% outerBasePop,
@@ -48,13 +50,14 @@ outerGRM = outerGRM[colnames(outerGRM) %in% outerBasePop,
 otherGRM = otherGRM[colnames(otherGRM) %in% otherBasePop,
                     colnames(otherGRM) %in% otherBasePop]
 
- 
+# Find Legarra-scaling factor for GRMs
 kRioInner = mean(diag(innerGRM)) - mean(innerGRM)
 kRioOuter = mean(diag(outerGRM)) - mean(outerGRM)
 kRioOther = mean(diag(otherGRM)) - mean(otherGRM)
  
 kRio = rbind(kRioInner, kRioOuter, kRioOther)
  
+# Shrink relatedness matrices
 A_inner = as.matrix(A_inner[colnames(A_inner) %in% innerBasePop,
                             colnames(A_inner) %in% innerBasePop])
 
@@ -64,17 +67,20 @@ A_outer = as.matrix(A_outer[colnames(A_outer) %in% outerBasePop,
 A_other = as.matrix(A_other[colnames(A_other) %in% otherBasePop,
                             colnames(A_other) %in% otherBasePop])
 
+# Find Legarra-scaling factor for As
 kPedInner = mean(diag(A_inner)) - mean(A_inner)
 kPedOuter = mean(diag(A_outer)) - mean(A_outer)
 kPedOther = mean(diag(A_other)) - mean(A_other)
 kPed = rbind(kPedInner, kPedOuter, kPedOther)
 
+# Returns the posterior of the scaled variances
 getLegarraPosterior = function(model, precision, k) {
   return(inla.zmarginal(inla.tmarginal(
     function(x) k / x,
     model$marginals.hyperpar[[precision]])))
 }
 
+# Perform scaling
 innerRioLegarrad = getLegarraPosterior(modelRio, 5, kRioInner)
 innerPedLegarrad = getLegarraPosterior(modelPed, 5, kPedInner)
 
@@ -84,6 +90,7 @@ outerPedLegarrad = getLegarraPosterior(modelPed, 6, kPedOuter)
 otherRioLegarrad = getLegarraPosterior(modelRio, 7, kRioOther)
 otherPedLegarrad = getLegarraPosterior(modelPed, 7, kPedOther)
 
+# Save data
 save(innerRioLegarrad, innerPedLegarrad,
      outerRioLegarrad, outerPedLegarrad,
      otherRioLegarrad, otherPedLegarrad,
