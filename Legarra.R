@@ -83,7 +83,7 @@ otherPedLegarrad = getLegarraPosterior(modelPed, 7, kPedOther)
 save(innerRioLegarrad, innerPedLegarrad,
      outerRioLegarrad, outerPedLegarrad,
      otherRioLegarrad, otherPedLegarrad,
-     file = paste0("Runs/legarra_", response, ".RData"))
+     file = paste0("Runs/legarra/", response, loter_run, ".RData"))
 
 ######################## One time: find gamma matrices ############
 

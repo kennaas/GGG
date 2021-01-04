@@ -36,7 +36,7 @@ scatterplot_single = function(admOnly, comp, group) {
                                        "admixed population only",
                                        "phenotyped population"))) + #"Group membership proportions: ", group), 
     #       subtitle = "Genome-based vs. pedigree-based") +
-    ylab(bquote(pi[i*.(groupNum)])) + #ylab(expression(pi[iparse(groupNum)])) +
+    ylab(bquote(hat(pi)[i*.(groupNum)])) + #ylab(expression(pi[iparse(groupNum)])) +
     xlab(bquote(q[i*.(groupNum)])) +
     guides(color = NULL) +
     #geom_smooth(method = "auto", color = col, 

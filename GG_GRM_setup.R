@@ -7,7 +7,7 @@ library(BGData)
 source("My_R_code/file_backed_mat.R")
 
 group = "Other"
-loter_run = 4
+loter_run = 3
 
 load.BGData(file = paste0("Data/loter/Run ", loter_run,
                           "/W/W.RData"))
