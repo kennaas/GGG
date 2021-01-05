@@ -2,7 +2,9 @@ library(Matrix)
 library(BGData)
 library(ff)
 
+# Help functions to create custom file backed matrices
 
+# Function to initialize file backed system
 ffNodeInitializer = function(nodeIndex, nrow, ncol, vmode, folderOut, ...) {
   filename <- paste0("geno_", nodeIndex, ".bin")
   node <- ff(dim = c(nrow, ncol), vmode = vmode, filename = paste0(folderOut, "/", filename), ...)
@@ -11,7 +13,13 @@ ffNodeInitializer = function(nodeIndex, nrow, ncol, vmode, folderOut, ...) {
   return(node)
 }
 
-# Default: boolean = 1 bit without NA.
+# Initializes a file back matrix of a specific size (nrow x ncol),
+# and data type. Data types:
+# boolean = 1 bit without NA.
+# logical = 2 bit (with NA)
+# byte (integers up to 2^7)
+# double
+# etc.
 initFileBackedMatrix = function(nrows, ncols, folderOut, outputType) {
   dir.create(folderOut)
 
