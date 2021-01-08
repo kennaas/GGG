@@ -5,13 +5,18 @@ if (!require(data.table)) install.packages("data.table")
 library(data.table)
 if (!require(BGData)) install.packages("BGData")
 library(BGData)
+if (!require(parallel)) install.packages("parallel")
+library(parallel)
 source("My_R_code/file_backed_mat.R")
 
 ##################### Settings ####################################
 
 group = "Other"
-loter_run = 3
-cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, 8)
+loter_run = 1
+# The parallel implementation in BGData does not work on Windows.
+# So if ran on Windows, use only one core (slow), otherwise use all.
+cores = ifelse(Sys.info()[['sysname']] == "Windows", 
+               1, detectCores())
 
 ##################### Load data ###################################
 
@@ -44,6 +49,8 @@ WA = initFileBackedMatrix(numInds, 2 * numSNPs,
                                              group),
                           outputType = "boolean")
 
+# Would be nice to parallelize this part too...
+# Maybe a future BGData release will have a function chunkedOuter()? (or write self)
 for (ind in 1:numInds) {
   WA[ind, ] = W@geno[ind, ] * get(paste0("A", group))@geno[ind, ]
   print(paste0("Subject ", ind, " / ", numInds))
@@ -89,7 +96,7 @@ V = BGData(geno = initFileBackedMatrix(
   folderOut = paste0("Data/loter/Run ", loter_run, "/V", group),
   outputType = "double"), pheno = data.frame(ID = inds))
 
-# Center and scale 
+# Center and scale. Should also be parallelized
 for (ind in 1:numInds) {
   V@geno[ind, ] = get(paste0("A", group))@geno[ind, ] * (W@geno[ind, ] - rep(p, each = 2))
   print(paste0("Subject ", ind, " / ", numInds))

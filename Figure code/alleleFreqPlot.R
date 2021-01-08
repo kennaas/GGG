@@ -3,7 +3,10 @@ library(ggplot2)
 library(RColorBrewer)
 library(gridExtra)
 library(grid)
-load(file = "Runs/alleleFreqs3.RData")
+
+loter_run = 3
+
+load(file = paste0("Runs/alleleFreqs", loter_run, ".RData"))
 #head(comp)
 #kable(comp)
 
@@ -40,7 +43,7 @@ ggplot(data = data.frame(f_inner, f_outer, f_outer)) +
 
 dev.off()
 ggsave(path = "Figures",
-       filename = "alleleFreqPlot.pdf",
+       filename = paste0("alleleFreqPlot", loter_run, ".pdf"),
        device = "pdf", units = "in",
        width = 4, height = 3)
 rm(list = ls())

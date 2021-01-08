@@ -5,7 +5,7 @@ library(data.table)
 
 source("My_R_code/file_backed_mat.R")
 
-loter_run = 3
+loter_run = 1
 
 # Load phased haplotype data from different populations
 

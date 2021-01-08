@@ -7,15 +7,16 @@ library(knitr)
 
 ###################### Load data ##################################
 
+loter_run = 1
+
 load("Runs/morphData_pedigree_version.RData")
 load("Runs/pedigree.RData")
-load("Runs/GRMs/GRM_rio3_Inner.RData")
 
-
+load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Inner.RData"))
 pi_mat = data.table(ID = rownames(G_VR), pi_inner = pi)
-load("Runs/GRMs/GRM_rio3_Outer.RData")
+load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Outer.RData"))
 pi_mat$pi_outer = pi
-load("Runs/GRMs/GRM_rio3_Other.RData")
+load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Other.RData"))
 pi_mat$pi_other = pi
 
 #head(pedigreeData[pedigreeData$ringnr %in% pi_mat$ID, c(1, 10, 11, 12)])
@@ -27,4 +28,4 @@ pi_mat$pi_other = pi
 # on pedigree and genome.
 comp = cbind(pedigreeData[match(pi_mat$ID, pedigreeData$ringnr), c(1, 10:12)], pi_mat[, -1])
 
-save(comp, file = "Runs/q&pi_comp3.RData")
+save(comp, file = paste0("Runs/q&pi_comp", loter_run, ".RData"))

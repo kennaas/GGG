@@ -3,33 +3,19 @@ library(data.table)
 library(BGData)
 source("My_R_code/file_backed_mat.R")
 
+loter_run = 1
 
-load.BGData(file = "Data/BGData_W1_beagle1/BGData.RData")
-W1 = BGData
-load.BGData(file = "Data/BGData_W2_beagle1/BGData.RData")
-W2 = BGData
+load.BGData(file = paste0("Data/loter/Run ", loter_run, 
+                          "/W/W.RData"))
+
 cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, 8)
-numInds = dim(W1@geno)[1]
-numSNPs = dim(W1@geno)[2]
-inds = dimnames(W1@geno)[[1]]
-SNPs = dimnames(W1@geno)[[2]]
-
-W = initFileBackedMatrix(numInds, 2 * numSNPs,
-                         folderOut = "W")
+numInds = dim(W@geno)[1]
+numSNPs = dim(W@geno)[2]
+inds = dimnames(W@geno)[[1]]
+SNPs = dimnames(W@geno)[[2]]
 
 SNPs1 = seq(1, by = 2, to = 2 * numSNPs)
 SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
-
-######################## Splice together haplotype matrices #######
-
-
-for (ind in 1:numInds) {
-  W[ind, SNPs1] = W1@geno[ind, ]
-  W[ind, SNPs2] = W2@geno[ind, ]
-  print(paste0("Subject ", ind, " / ", numInds))
-}
-rm(W1)
-rm(W2)
 
 ########################### Finding F #############################
 
@@ -43,13 +29,13 @@ f = f_numerator / (2 * numInds)
 
 ###################### Find G #####################################
 
-G = getG(W, center = rep(f, each = 2), scale = FALSE,
+G_numerator = getG(W, center = rep(f, each = 2), scale = FALSE,
          scaleG = FALSE, nCores = cores, verbose = TRUE)
 
-G_denominator = 2 * sum(f * (1 - f))
+G_denominator = sum(rep(p, each = 2) * (1 - rep(p, each = 2)))
 
-GRM = G / G_denominator
-dimnames(GRM)[[1]] = inds
-dimnames(GRM)[[2]] = inds
+GRM = G_numerator / G_denominator
+dimnames(GRM)[[1]] = dimnames(GRM)[[2]] = inds
 
-save(GRM, file = "Runs/GRMs/GRM_vanRaden_imputed&phased.RData")
+save(GRM, file = paste0("Runs/GRMs/GRM_vanRaden_imputed&phased",
+                        loter_run , ".RData"))

@@ -3,9 +3,12 @@ library(ggplot2)
 library(RColorBrewer)
 library(gridExtra)
 library(grid)
+
+loter_run = 1
+
 load(file = "Runs/morphData_pedigree_version.RData")
-load(file = "Runs/q&pi_comp3.RData")
-load(file = "Data/Founders3/founders.RData")
+load(file = paste0("Runs/q&pi_comp", loter_run, ".RData"))
+load(file = paste0("Data/Founders", loter_run, "/founders.RData"))
 #head(comp)
 #kable(comp)
 
@@ -49,26 +52,9 @@ scatterplot_single = function(admOnly, comp, group) {
   return(qVsPiPlot)
 }
 
-
-scatterplot_big = function(pop, comp) {
-  qVsPiPlot = ggplot(data = comp[comp$ringnr %in% pop, ]) +
-    geom_point(aes(x = inner, y = pi_inner, color = "inner")) +
-    geom_point(aes(x = outer, y = pi_outer, color = "outer")) +
-    geom_point(aes(x = other, y = pi_other, color = "other")) +
-    theme_light() +
-    ggtitle("Group membership proportions", 
-            subtitle = "Genome-based vs. pedigree-based") +
-    scale_color_manual(values = my_colors, 
-                       breaks = c("inner", "outer", "other")) +
-    ylab(expression(pi[ir])) +
-    xlab(expression(q[ir]))
-  
-  return(qVsPiPlot)
-}
-
 pop_corr = function(pop, comp) {
   comp_temp = comp[comp$ringnr %in% pop, ]
-  scatterplot_big(pop, comp)
+
   
   print(dim(comp_temp)[1])
   
@@ -81,7 +67,8 @@ pop = morphData$ringnr
 popAdm = admixedInds[admixedInds %in% morphData$ringnr]
 
 pop_corr(pop, comp)
-#scatterplot_big(pop, comp)
+pop_corr(popAdm, comp)
+
 inner = scatterplot_single(admOnly = FALSE, comp, "inner")
 outer = scatterplot_single(admOnly = FALSE, comp, "outer")
 other = scatterplot_single(admOnly = FALSE, comp, "other")
@@ -109,7 +96,7 @@ scatterPlotFull =
 
 dev.off()
 ggsave(plot = scatterPlotFull, path = "Figures", 
-       filename = "groupScatterplot.pdf",
+       filename = paste0("groupScatterplot", loter_run, ".pdf"),
        device = "pdf", units = "in", 
        width = 8.27, height = 6)
 
