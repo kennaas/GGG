@@ -35,12 +35,13 @@ scatterplot_single = function(admOnly, comp, group) {
     xlim(0, 1) +
     ylim(0, 1) +
     theme_light() +
-    ggtitle(paste0(group, ": ", ifelse(admOnly, 
-                                       "admixed population only",
-                                       "phenotyped population"))) + #"Group membership proportions: ", group), 
+    ggtitle(group) +
+    # ggtitle(paste0(group, ": ", ifelse(admOnly, 
+    #                                    "admixed population only",
+    #                                    "phenotyped population"))) + #"Group membership proportions: ", group), 
     #       subtitle = "Genome-based vs. pedigree-based") +
-    ylab(bquote(hat(pi)[i*.(groupNum)])) + #ylab(expression(pi[iparse(groupNum)])) +
-    xlab(bquote(q[i*.(groupNum)])) +
+    ylab(bquote(hat(italic(pi))[italic(i)*.(groupNum)])) + #ylab(expression(pi[iparse(groupNum)])) +
+    xlab(bquote(italic(q)[italic(i)*.(groupNum)])) +
     guides(color = NULL) +
     #geom_smooth(method = "auto", color = col, 
     #            se = TRUE, fullrange = FALSE, level = 0.95) +
@@ -77,27 +78,37 @@ innerAdm = scatterplot_single(admOnly = TRUE, comp, "inner")
 outerAdm = scatterplot_single(admOnly = TRUE, comp, "outer")
 otherAdm = scatterplot_single(admOnly = TRUE, comp, "other")
 
-title = textGrob("Group membership proportions", 
+title = textGrob("Group membership proportions (phenotyped admixed population)", 
                  gp = gpar(fontsize = 15, fontface = 2L))
 subtitle = textGrob("Genome-based vs. pedigree-based", gp = gpar(fontsize = 10, fontface = 3L))
 margin = unit(0.1, "line")
+# scatterPlotFull = 
+#   grid.arrange(title,
+#                subtitle,
+#                inner, innerAdm,
+#                outer, outerAdm,
+#                other, otherAdm,
+#                layout_matrix = matrix(c(1,1,1,
+#                                         2,2,2,
+#                                         3,5,7,
+#                                         4,6,8), byrow = TRUE,
+#                                       nrow = 4, ncol = 3),
+#                heights = c(margin, margin, 1, 1))
+
 scatterPlotFull = 
   grid.arrange(title,
                subtitle,
-               inner, innerAdm,
-               outer, outerAdm,
-               other, otherAdm,
+               innerAdm, outerAdm, otherAdm,
                layout_matrix = matrix(c(1,1,1,
                                         2,2,2,
-                                        3,5,7,
-                                        4,6,8), byrow = TRUE,
-                                      nrow = 4, ncol = 3),
-               heights = c(margin, margin, 1, 1))
+                                        3,4,5), byrow = TRUE,
+                                      nrow = 3, ncol = 3),
+               heights = c(margin, margin, 1))
 
 dev.off()
 ggsave(plot = scatterPlotFull, path = "Figures", 
        filename = paste0("groupScatterplot", loter_run, ".pdf"),
        device = "pdf", units = "in", 
-       width = 8.27, height = 6)
+       width = 8.27, height = 3.3)
 
 rm(list = ls())
