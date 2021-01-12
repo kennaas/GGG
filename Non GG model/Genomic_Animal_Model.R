@@ -35,6 +35,10 @@ option_list = list(
   make_option(c("-s", "--shrink"), type = "logical", 
               default = TRUE, 
               help = "rerun inla model? (improves stability)", 
+              metavar = "character"),
+  make_option(c("-l", "--loter_run"), type = "integer", 
+              default = 1, 
+              help = "which loter run to use (for imputed&phased VR)", 
               metavar = "character")
 )
 opt_parser = OptionParser(option_list = option_list)
@@ -52,6 +56,8 @@ usePed = opt$usePedigree
 iterate = opt$iterate
 # Whether to only keep relevant relatednesses
 shrink = opt$shrink
+
+loter_run = opt$loter_run
 
 
 ######################## Load Data ################################
@@ -74,7 +80,8 @@ switch (GRMVariant,
           load("Runs/GRMs/GRM_vanRaden.RData") 
         },
         vanRaden_impute = {
-          load("Runs/GRMs/GRM_vanRaden_imputed&phased.RData")
+          load(paste0("Runs/GRMs/GRM_vanRaden_imputed&phased",
+                      loter_run, ".RData"))
         },
         GCTA = {
           GRMVariant = paste0(GRMVariant, "_alpha_", alpha)
@@ -146,23 +153,31 @@ if (shrink) {
   val = "1:numRel"
 }
 
-# Formula
-s = paste0(response, " ~ sex + FGRM + month + age + outer + other +
-  f(hatchYear, model = \"iid\", 
-    hyper = list(prec = list(initial = log(1),
-                             prior = \"pc.prec\", 
-                             param = c(1, 0.05)))) + 
-  f(ID1, model = \"iid\", 
-    hyper = list(prec = list(initial = log(1),
-                             prior = \"pc.prec\",
-                             param = c(2, 0.05)))) + 
-  f(ID2, values = ", val, ", 
-    model = \"generic0\", Cmatrix = Cmatrix, constr = TRUE,
-    hyper = list(prec = list(initial = log(0.69),
-                             prior = \"pc.prec\",
-                             param = c(3, 0.05)))
-    )")
-formula = as.formula(s)
+effects = c("sex", "FGRM", "month", "age")
+
+randomEffects = c("f(hatchYear, model = \"iid\", 
+                  hyper = list(prec = list(initial = log(10), 
+                  prior = \"pc.prec\", param = c(1, 0.05))))",
+                  
+                  "f(islandCurrent, model = \"iid\", 
+                  hyper = list(prec = list(initial = log(10), 
+                  prior = \"pc.prec\", param = c(1, 0.05))))",
+                  
+                  "f(ID1, model = \"iid\", 
+                  hyper = list(prec = list(initial = log(1),
+                  prior = \"pc.prec\", param = c(1, 0.05))))",
+                  
+                  paste0("f(ID2,values =", val, ", 
+                  model = \"generic0\", Cmatrix = Cmatrix,
+                  constr = TRUE, hyper = list(
+                  prec = list(initial = log(0.50), 
+                  prior = \"pc.prec\",
+                  param = c(1, 0.05))))"))
+
+# Add random effects to fixed effects
+effects = c(effects, randomEffects)
+# Make formula
+s = reformulate(effects, response = response)
 
 # Find inverse of G (or A)
 if (usePed) {
@@ -175,15 +190,16 @@ if (usePed) {
   }
 }
 
-model = inla(formula = formula, family = "gaussian",
-                   data = morphData, verbose = TRUE,
-                   control.family = list(
-                     hyper = list(theta = list(initial = log(1),
-                                               prior = "pc.prec",
-                                               param=c(1, 0.05)))))
+model = inla(formula = s, family = "gaussian",
+             data = morphData, verbose = TRUE,
+             control.family = list(
+               hyper = list(theta = list(initial = log(1),
+                                         prior = "pc.prec",
+                                         param=c(1, 0.05)))))
 if (iterate) {
-  model = inla.rerun(model)
-  model = inla.rerun(model)
+  model01 = model
+  model02 = inla.rerun(model01)
+  model = inla.rerun(model02)
 }
   
 
