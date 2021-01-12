@@ -2,8 +2,8 @@ library(BGData)
 library(INLA)
 
 # Pick response and local ancestry run
-response = "wing"
-loter_run = 3
+response = "tarsus"
+loter_run = 1
 
 ################### Load data #####################################
 
@@ -14,7 +14,7 @@ load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Outer.RData"))
 outerGRM = G_VR
 load(paste0("Runs/GRMs/GRM_rio", loter_run, "_Other.RData"))
 otherGRM = G_VR
-rm(G_VR, G_GCTA, pi, delta)
+rm(G_VR, G_GCTA1, G_GCTA2, pi, delta)
 
 # Load phenotypic data
 load("Runs/morphData_pedigree_version.RData")
@@ -24,12 +24,14 @@ load(paste0("Data/Founders", loter_run, "/founders.RData"))
 innerInds = na.omit(unique(innerInds))
 outerInds = na.omit(unique(outerInds))
 otherInds = na.omit(unique(otherInds))
-admixedInds = admixedInds[admixedInds %in% morphData$ringnr]
+admixedInds = na.omit(unique(admixedInds))
 
 # Load INLA results
-load(paste0("Runs/", response, "/inla_result_hetGG_rio3_VR_", response, ".RData"))
+load(paste0("Runs/", response, "/inla_result_hetGG_rio", loter_run,
+            "_VR_", response, ".RData"))
 modelRio = model
-load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_", response, ".RData"))
+load(paste0("Runs/", response, "/inla_result_hetGG_pedigree_",
+            response, ".RData"))
 modelPed = model
 rm(model)
 #Load partial relatedness matrices
@@ -38,9 +40,12 @@ load("Runs/A_hetped.RData")
 ######################### Legarra scaling #######################
 
 # Define base populations
-innerBasePop = c(innerInds, admixedInds)
-outerBasePop = c(outerInds, admixedInds)
-otherBasePop = c(otherInds, admixedInds)
+# innerBasePop = c(innerInds, admixedInds)
+# outerBasePop = c(outerInds, admixedInds)
+# otherBasePop = c(otherInds, admixedInds)
+innerBasePop = innerInds[innerInds %in% morphData$ringnr]
+outerBasePop = outerInds[outerInds %in% morphData$ringnr]
+otherBasePop = otherInds[otherInds %in% morphData$ringnr]
 
 # Shrink GRMs to base populations
 innerGRM = innerGRM[colnames(innerGRM) %in% innerBasePop,
