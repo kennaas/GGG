@@ -3,7 +3,7 @@ library(gridExtra)
 library(INLA)
 library(RColorBrewer)
 save = TRUE
-run_num = 3
+run_num = 1
 
 
 load(paste0("Runs/wing/inla_result_hetGG_rio", run_num, "_VR_wing.RData"))
@@ -106,7 +106,8 @@ allPlot = grid.arrange(wingPlot, massPlot, tarsusPlot, nrow = 3)
 
 if (save) {
   dev.off()
-  ggsave(plot = allPlot, path = "Figures", filename = "VA_rio3.pdf",
+  ggsave(plot = allPlot, path = "Figures", 
+         filename = paste0("VA_rio", run_num, ".pdf"),
          device = "pdf", units = "in", 
          width = 8.27, height = 9)
   #system(paste0('start "', path, '"'))

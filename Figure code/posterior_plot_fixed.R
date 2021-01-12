@@ -3,7 +3,7 @@ library(gridExtra)
 library(INLA)
 library(RColorBrewer)
 save = TRUE
-run_num = 3
+run_num = 1
 
 
 load(paste0("Runs/wing/inla_result_hetGG_rio", run_num, "_VR_wing.RData"))
@@ -48,7 +48,8 @@ make_post_plot = function(response, legend) {
               aes(x, y, color = "other", linetype = "Pedigree"),
               size = 1) +
     geom_vline(data = data.frame(x = 0), show.legend = FALSE,
-               mapping = aes(xintercept = x, color = "inner")) + 
+               mapping = aes(xintercept = x, color = "inner"),
+               size = 1) + 
     theme_light() +
     ggtitle(switch(response, 
                    wing = "Wing length",
@@ -58,7 +59,7 @@ make_post_plot = function(response, legend) {
                        breaks = c("inner", "outer", "other")) +
     scale_linetype_manual(values = c("solid", "dotted")) +
     ylab("Density") +
-    xlab(expression(gamma[r])) +
+    xlab(bquote(paste("Genetic group effect ", italic(gamma[r])))) +
     scale_y_continuous(labels = function(x) {sprintf("%.1f", x)}) +
     theme(panel.border = element_rect(color = "black", size = 1),
           panel.grid = element_blank(),
@@ -92,7 +93,8 @@ allPlot = grid.arrange(wingPlot, massPlot, tarsusPlot, nrow = 3)
 
 if (save) {
   dev.off()
-  ggsave(plot = allPlot, path = "Figures", filename = "fixed_rio3.pdf",
+  ggsave(plot = allPlot, path = "Figures", 
+         filename = paste0("fixed_rio", run_num, ".pdf"),
          device = "pdf", units = "in", 
          width = 8.27, height = 9)
   #system(paste0('start "', path, '"'))
