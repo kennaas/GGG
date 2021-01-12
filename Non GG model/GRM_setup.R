@@ -3,6 +3,8 @@ if (!require(BGData)) install.packages("BGData")
 library(BGData)
 if (!require(optparse)) install.packages("optparse")
 library(optparse)
+if (!require(parallel)) install.packages("parallel")
+library(parallel)
 
 ##################### Options #####################################
 
@@ -25,7 +27,7 @@ alpha = opt$alpha
 
 # Windows does not support multiple cores 
 OS = Sys.info()[['sysname']]
-nCores = ifelse(OS == "Windows", 1, 8)
+nCores = ifelse(OS == "Windows", 1, detectCores())
 
 ##################### Data import #################################
 
@@ -38,7 +40,7 @@ nCores = ifelse(OS == "Windows", 1, 8)
 #                     idCol = 2)
 
 # After first time, load the data now in BGData format.
-load.BGData(file = "Data/BGData_Helgeland_01_2018_Dosage/BGData.RData")
+load.BGData(file = "Data/BGData/BGData_Helgeland_01_2018_Dosage/BGData.RData")
 
 ################### Minor Allele Frequency Function ###############
 
