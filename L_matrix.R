@@ -24,10 +24,10 @@ cores = ifelse(Sys.info()[['sysname']] == "Windows",
 
 ##################### Load data ###################################
 
-# Local ancestry data for the group in question
+# Haplotype data
 load.BGData(file = paste0("Data/loter/Run ", loter_run,
                           "/W/W.RData"))
-# Haplotype data
+
 load.BGData(file = paste0("Data/loter/Run ", loter_run, 
                           "/A", group, "/A", group, ".RData"))
 
@@ -46,27 +46,44 @@ SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
 ###################### Find V #####################################
 
 # Temporary haplotype matrix
-V1 = BGData(geno = initFileBackedMatrix(
+L1 = BGData(geno = initFileBackedMatrix(
   numInds, numSNPs,  
-  folderOut = paste0("Data/loter/Run ", loter_run, "/V1", group),
+  folderOut = paste0("Data/loter/Run ", loter_run, "/L1", group),
   outputType = "double"), pheno = data.frame(ID = inds))
 
-V2 = BGData(geno = initFileBackedMatrix(
+L2 = BGData(geno = initFileBackedMatrix(
   numInds, numSNPs,  
-  folderOut = paste0("Data/loter/Run ", loter_run, "/V2", group),
+  folderOut = paste0("Data/loter/Run ", loter_run, "/L2", group),
   outputType = "double"), pheno = data.frame(ID = inds))
-#V1@geno[, ] = chunkedApply(V1@geno, 1, MARGIN = 1, function(row) {row - p})
-# Center and scale. Should also be parallelized
-for (ind in 1:numInds) {
-  V1@geno[ind, ] = 
-    get(paste0("A", group))@geno[ind, SNPs1] * (W@geno[ind, SNPs1] - p)
-  V2@geno[ind, ] = 
-    get(paste0("A", group))@geno[ind, SNPs2] * (W@geno[ind, SNPs2] - p)
-  print(paste0("V row ", ind, " / ", numInds))
+
+p_scaling = sqrt(p * (1 - p))
+
+head(SNPs1)
+SNPs1 = as.integer(SNPs1)
+SNPs2 = as.integer(SNPs2)
+
+# a = seq(from = 1, by = 35, to = numInds)
+# for (i in seq_along(a)[-1]) {
+#   L1@geno[(a[i-1]):(a[i]), ] = chunkedApply(get(paste0("A", group))@geno[(a[i-1]):(a[i]), ],
+#                                             nCores = cores, MARGIN = 1,
+#                                             j = SNPs1, verbose = TRUE,
+#                                 function(row) row * p_scaling, chunkSize = 3)
+#   
+#   L2@geno[(a[i-1]):(a[i]), ] = chunkedApply(get(paste0("A", group))@geno[(a[i-1]):(a[i]), ],
+#                                             nCores = cores, MARGIN = 1,
+#                                             j = SNPs2, verbose = TRUE,
+#                                 function(row) row * p_scaling, chunkSize = 3)
+#   print(paste0("L row ", a[i-1], " to ", a[i]))
+# }
+
+for (row in 1:numInds) {
+  L1@geno[row, ] = get(paste0("A", group))@geno[row, SNPs1] * p_scaling
+  L2@geno[row, ] = get(paste0("A", group))@geno[row, SNPs2] * p_scaling
+  print(paste0("L row ", row, " / ", numInds))
 }
 
-save(V1, 
-     file = paste0("Data/loter/Run ", loter_run, "/V1", group, "/V1.RData"))
+save(L1, 
+     file = paste0("Data/loter/Run ", loter_run, "/L1", group, "/L1.RData"))
 
-save(V2, 
-     file = paste0("Data/loter/Run ", loter_run, "/V2", group, "/V2.RData"))
+save(L2, 
+     file = paste0("Data/loter/Run ", loter_run, "/L2", group, "/L2.RData"))
