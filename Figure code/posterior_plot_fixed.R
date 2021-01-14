@@ -3,7 +3,7 @@ library(gridExtra)
 library(INLA)
 library(RColorBrewer)
 save = TRUE
-run_num = 1
+run_num = 0
 
 
 load(paste0("Runs/wing/inla_result_hetGG_rio", run_num, "_VR_wing.RData"))

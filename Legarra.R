@@ -3,7 +3,7 @@ library(INLA)
 
 # Pick response and local ancestry run
 response = "tarsus"
-loter_run = 1
+loter_run = 0
 
 ################### Load data #####################################
 
@@ -20,7 +20,7 @@ rm(G_VR, G_GCTA1, G_GCTA2, pi, delta)
 load("Runs/morphData_pedigree_version.RData")
 
 # Load individuals in each ref or admixed populations
-load(paste0("Data/Founders", loter_run, "/founders.RData"))
+load(paste0("Data/Founders", loter_run+1, "/founders.RData"))
 innerInds = na.omit(unique(innerInds))
 outerInds = na.omit(unique(outerInds))
 otherInds = na.omit(unique(otherInds))
