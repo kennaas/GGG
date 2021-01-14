@@ -77,9 +77,7 @@ detach("package:BGData")
 library("BGData", lib.loc = old_lib)
 packageVersion("BGData")
 
-# load("safe1.RData")
-# load("safe2.RData")
-
+# Split up computation in two steps to alleviate memory issues
 print("b1:")
 b1 = tcrossprod_parallel(x = L1@geno, 
                          y = L2@geno[1:(numInds %/% 2), ],
@@ -93,6 +91,7 @@ gamma_denominator_VR_12 = cbind(b1, b2)
 print("transpose:")
 gamma_denominator_VR_21 = t(gamma_denominator_VR_12)
 
+# Sum the four matrix products
 gamma_den = 
   gamma_denominator_VR_11 + gamma_denominator_VR_12 +
   gamma_denominator_VR_21 + gamma_denominator_VR_22

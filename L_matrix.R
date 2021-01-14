@@ -24,7 +24,6 @@ cores = ifelse(Sys.info()[['sysname']] == "Windows",
 
 ##################### Load data ###################################
 
-# Haplotype data
 load.BGData(file = paste0("Data/loter/Run ", loter_run,
                           "/W/W.RData"))
 
@@ -45,7 +44,7 @@ SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
 
 ###################### Find V #####################################
 
-# Temporary haplotype matrix
+# Temporary local ancestry matrices based on denominator of gamma
 L1 = BGData(geno = initFileBackedMatrix(
   numInds, numSNPs,  
   folderOut = paste0("Data/loter/Run ", loter_run, "/L1", group),
@@ -62,6 +61,8 @@ head(SNPs1)
 SNPs1 = as.integer(SNPs1)
 SNPs2 = as.integer(SNPs2)
 
+
+# Failed attempt to parallelize:
 # a = seq(from = 1, by = 35, to = numInds)
 # for (i in seq_along(a)[-1]) {
 #   L1@geno[(a[i-1]):(a[i]), ] = chunkedApply(get(paste0("A", group))@geno[(a[i-1]):(a[i]), ],

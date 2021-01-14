@@ -45,10 +45,12 @@ SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
 
 ##################################################################
 
+# Desired function tcrossprod_parallel is only in old version of BGData
 detach("package:BGData")
 library("BGData", lib.loc = old_lib)
 packageVersion("BGData")
 
+# split computation into 3 blocks to alleviate memory issues.
 block1 = tcrossprod_parallel(x = get(paste0("A", group))@geno[, SNPs1],
                              y = get(paste0("A", group))@geno[
                                1:(numInds %/% 3), SNPs2],
@@ -84,6 +86,7 @@ theta_22 = getG(get(paste0("A", group))@geno,
 
 save(theta_22, file = "safe3.RData")
 
+# Sum and average over all matrix products to get theta
 theta = (theta_11 + theta_12 + theta_21 + theta_22) / (4 * numSNPs)
 
 save(theta, 

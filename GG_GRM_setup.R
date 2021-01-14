@@ -76,8 +76,10 @@ pi = chunkedApply(get(paste0("A", group))@geno, MARGIN = 1, mean,
 load(paste0("Data/loter/Run ", loter_run, "/gammaNumerator", group, ".RData"))
 load(paste0("Data/loter/Run ", loter_run, "/gammaDenominator", group, ".RData"))
 
+# The 1 / 2 is to give the proper standardization (similar to vanRaden)
 gamma_VR = gamma_num / (gamma_den / 2)
 
+# experiment: group-specific version of GCTA (rather than vanRaden)
 
 # GCTA - version 1 (local ancestries in num and mult. by theta)
 

@@ -45,7 +45,8 @@ SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
 
 ###################### Find V #####################################
 
-# Temporary haplotype matrix
+# Temporary centered and scaled haplotyped matrices used to
+# find the numerator of gamma
 V1 = BGData(geno = initFileBackedMatrix(
   numInds, numSNPs,  
   folderOut = paste0("Data/loter/Run ", loter_run, "/V1", group),
@@ -55,8 +56,8 @@ V2 = BGData(geno = initFileBackedMatrix(
   numInds, numSNPs,  
   folderOut = paste0("Data/loter/Run ", loter_run, "/V2", group),
   outputType = "double"), pheno = data.frame(ID = inds))
-#V1@geno[, ] = chunkedApply(V1@geno, 1, MARGIN = 1, function(row) {row - p})
-# Center and scale. Should also be parallelized
+
+# Center and scale as numerator of gamma. Should be parallelized
 for (ind in 1:numInds) {
   V1@geno[ind, ] = 
     get(paste0("A", group))@geno[ind, SNPs1] * (W@geno[ind, SNPs1] - p)

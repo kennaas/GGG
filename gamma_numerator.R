@@ -59,6 +59,8 @@ SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
 
 ##################### Find gamma numerator ########################
 
+# Compute four matrix products: all permuations of h=1 and h=2
+
 gamma_numerator_VR_11 = getG(V1@geno,
                              center = FALSE, scale = FALSE,
                              scaleG = FALSE, nCores = cores,
@@ -73,11 +75,13 @@ gamma_numerator_VR_22 = getG(V2@geno,
 
 save(gamma_numerator_VR_22, file = "safe2.RData")
 
+# A desired function is only in old version of BGData
 print("Changing version")
 detach("package:BGData")
 library("BGData", lib.loc = old_lib)
 packageVersion("BGData")
 
+# Split this computation in two to make it easier memory-wise
 print("starting tcrossprod_parallel")
 b1 = tcrossprod_parallel(x = V1@geno, 
                          y = V2@geno[1:(numInds %/% 2), ],
@@ -90,6 +94,7 @@ print("finished, doing transpose")
 gamma_numerator_VR_21 = t(gamma_numerator_VR_12)
 print("finished")
 
+# Sum the four matrix products
 gamma_num = 
   gamma_numerator_VR_11 + gamma_numerator_VR_12 +
   gamma_numerator_VR_21 + gamma_numerator_VR_22
