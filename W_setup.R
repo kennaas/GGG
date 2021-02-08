@@ -3,8 +3,6 @@ if (!require(R.utils)) install.packages("R.utils")
 library(R.utils)
 if (!require(data.table)) install.packages("data.table")
 library(data.table)
-if (!require(foreach)) install.packages("foreach")
-library(foreach)
 })
   
 source("My_R_code/file_backed_mat.R")
@@ -45,11 +43,6 @@ W = BGData(pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize
                                        folderOut = paste0("Data/loter/Run ", loter_run, "/W")))
 
 
-indHaplo = function(ind, firstInd, groupVCF) {
-  indVCF = ind + 1 - firstInd
-  W@geno[ind, ] = sapply(groupVCF[indVCF, ], function(x) as.numeric(grepl("^1", x)))
-}
-
 # Fill matrix with haplotype data from the VCF format
 fillW = function(group, firstInd, lastInd) {
   print("Loading haplotypes...")
@@ -66,12 +59,8 @@ fillW = function(group, firstInd, lastInd) {
     iVCF = ind + 1 - firstInd
     W@geno[ind, ] = h1[[iVCF]]
     W@geno[ind + popSize, ] = h2[[iVCF]]
-    # print(paste0("Individual ", ind))
   }
   rm(h1, h2)
-  
-  # mclapply(firstInd:lastInd, indHaplo, firstInd, groupVCF, mc.cores = numCores)
-  # rm(groupVCF)
   print("Done.")
 }
 
