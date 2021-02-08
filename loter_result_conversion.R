@@ -2,15 +2,12 @@ library(data.table)
 library(BGData)
 source("My_R_code/file_backed_mat.R")
 
-loter_run = 3
+loter_run = 1
 
-# Find Reference population and admixed individuals 
-
+# Find purebred and admixed populations  
 get_pop = function(group) {
-  groupFile = file(paste0("Data/loter/Run ", loter_run,
-                          "/Loter input ", loter_run,
-                          "/", group, "_phased", loter_run,
-                          ".vcf.gz"), open = "r")
+  groupFile = file(paste0("Data/loter/Run ", loter_run, "/Input/", group, "_phased.vcf.gz"),
+                   open = "r")
   groupLine = scan(groupFile, nlines = 1, skip = 8,
                    what = character(), quiet = TRUE)
   close(groupFile)
@@ -21,107 +18,88 @@ innerInds = get_pop("inner")
 outerInds = get_pop("outer")
 otherInds = get_pop("other")
 admixedInds = get_pop("admixed")
+numInnerInds = length(innerInds)
+numOuterInds = length(outerInds)
+numOtherInds = length(otherInds)
+numAdmixedInds = length(admixedInds)
+pop = c(innerInds, outerInds, otherInds, admixedInds)
+popSize = length(pop)
 
-SNPs = fread(file = paste0("Data/loter/Run ", loter_run,
-                           "/Loter input ", loter_run,
-                           "/admixed_phased", loter_run,".vcf.gz"),
-              select = 3)$ID
+SNPs = fread(file = paste0("Data/loter/Run ", loter_run, "/Input/admixed_phased.vcf.gz"),
+             select = 3)$ID
+numSNPs = length(SNPs)
 
-
-inds = c(innerInds, outerInds, otherInds, admixedInds)
-
-# Create BGData objects for each local ancestry matrix
-
+# Create BGData objects for each local ancestry matrix.
+# First popSize rows correspond to DNA strand 1 and next popSize correspond to DNA strand 2
 AOuter = BGData(
-  geno = initFileBackedMatrix(length(inds), 2 * length(SNPs),
-                              folderOut = paste0("Data/loter/Run ",
-                                                 loter_run,
-                                                 "/AOuter"),
+  geno = initFileBackedMatrix(2 * popSize, numSNPs,
+                              folderOut = paste0("Data/loter/Run ", loter_run, "/AOuter"),
                               outputType = "boolean"),
-  pheno = data.frame(ID = inds))
+  pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize)))
 
 AInner = BGData(
-  geno = initFileBackedMatrix(length(inds), 2 * length(SNPs),
-                              folderOut = paste0("Data/loter/Run ",
-                                                 loter_run,
-                                                 "/AInner"),
+  geno = initFileBackedMatrix(2 * popSize, numSNPs,
+                              folderOut = paste0("Data/loter/Run ", loter_run, "/AInner"),
                               outputType = "boolean"),
-  pheno = data.frame(ID = inds))
+  pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize)))
 
 AOther = BGData(
-  geno = initFileBackedMatrix(length(inds), 2 * length(SNPs),
-                              folderOut = paste0("Data/loter/Run ",
-                                                 loter_run,
-                                                 "/AOther"),
+  geno = initFileBackedMatrix(2 * popSize, numSNPs,
+                              folderOut = paste0("Data/loter/Run ", loter_run, "/AOther"),
                               outputType = "boolean"),
-  pheno = data.frame(ID = inds))
+  pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize)))
 
 # For inner rows, set inner LA to 1, outer and other to 0
-
-i = c(1, length(innerInds))
-for (row in i[1]:i[2]) {
-  AOuter@geno[row,] = AOther@geno[row, ] = rep(0, 2 * length(SNPs))
-  AInner@geno[row,] = rep(1, 2 * length(SNPs))
-  # print(row)
+print("Inner individuals...")
+for (ind in 1:numInnerInds) {
+  AOuter@geno[ind, ] = AOther@geno[ind, ] =
+    AOuter@geno[ind + popSize, ] = AOther@geno[ind + popSize, ] = rep(FALSE, numSNPs)
+  AInner@geno[ind, ] = AInner@geno[ind + popSize, ] = rep(TRUE, numSNPs)
 }
 
+print("Outer individuals...")
 # For outer rows, set outer LA to 1, inner and other to 0
-
-i = i + c(length(innerInds), length(outerInds))
-
-for (row in i[1]:i[2]) {
-  AInner@geno[row, ] = AOther@geno[row, ] = rep(0, 2 * length(SNPs))
-  AOuter@geno[row, ] = rep(1, 2 * length(SNPs))
-  # print(row)
+for (ind in (numInnerInds + 1):(numInnerInds + numOuterInds)) {
+  AInner@geno[ind, ] = AOther@geno[ind, ] =
+    AInner@geno[ind + popSize, ] = AOther@geno[ind + popSize, ] = rep(FALSE, numSNPs)
+  AOuter@geno[ind, ] = AOuter@geno[ind + popSize, ] = rep(TRUE, numSNPs)
 }
 
-# For other rows, set outer LA to 1, inner and outer to 0
-
-i = i + c(length(outerInds), length(otherInds))
-
-for (row in i[1]:i[2]) {
-  AInner@geno[row, ] = AOuter@geno[row,] = rep(0, 2 * length(SNPs))
-  AOther@geno[row, ] = rep(1, 2 * length(SNPs))
-  # print(row)
+print("Other individuals...")
+# For other rows, set other LA to 1, inner and outer to 0
+for (ind in (numInnerInds + numOuterInds + 1):(popSize - numAdmixedInds)) {
+  AInner@geno[ind, ] = AOuter@geno[ind, ] =
+    AInner@geno[ind + popSize, ] = AOuter@geno[ind + popSize, ] = rep(FALSE, numSNPs)
+  AOther@geno[ind, ] = AOther@geno[ind + popSize, ] = rep(TRUE, numSNPs)
 }
-i = i + c(length(otherInds), length(admixedInds))
-
-
-
-# Order in loter: Outer == 0, Inner == 1, Other == 2
-# (since we happened to place outer first in loter)
-SNPs1 = seq(1, by = 2, to = 2 * length(SNPs))
-SNPs2 = seq(2, by = 2, to = 2 * length(SNPs))
 
 # In admixed rows, use loter results to determine values
-
-admixedFile = file(paste0("Data/loter/Run ", loter_run,
-                          "/loter_result", loter_run, ".txt"), 
+# Order in loter: Outer == 0, Inner == 1, Other == 2
+# (since we happened to place them in this order in loter)
+print("Admixed individuals...")
+admixedFile = file(paste0("Data/loter/Run ", loter_run, "/loter_result.txt"), 
                    open = "r")
-for (row in i[1]:i[2]) {
-  line1  = scan(admixedFile, nlines = 1, 
-                what = integer(), quiet = TRUE)
-  AOuter@geno[row, SNPs1] = ifelse(line1 == 0, 1, 0)
-  AInner@geno[row, SNPs1] = ifelse(line1 == 1, 1, 0)
-  AOther@geno[row, SNPs1] = ifelse(line1 == 2, 1, 0)
-  line2 = scan(admixedFile, nlines = 1, 
-               what = integer(), quiet = TRUE)
-  AOuter@geno[row, SNPs2] = ifelse(line2 == 0, 1, 0)
-  AInner@geno[row, SNPs2] = ifelse(line2 == 1, 1, 0)
-  AOther@geno[row, SNPs2] = ifelse(line2 == 2, 1, 0)
+for (ind in (popSize - numAdmixedInds + 1):popSize) {
+  line1  = scan(admixedFile, nlines = 1, what = integer(), quiet = TRUE)
+  AOuter@geno[ind, ] = line1 == 0
+  AInner@geno[ind, ] = line1 == 1
+  AOther@geno[ind, ] = line1 == 2
+  
+  line2 = scan(admixedFile, nlines = 1, what = integer(), quiet = TRUE)
+  AOuter@geno[ind + popSize, ] = line2 == 0
+  AInner@geno[ind + popSize, ] = line2 == 1
+  AOther@geno[ind + popSize, ] = line2 == 2
   # print(row)
 }
 close(admixedFile)
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run,
-                          "/W/W.RData"))
-# set dimnames
-dimnames(AInner@geno) = dimnames(W@geno)
-dimnames(AOuter@geno) = dimnames(W@geno)
-dimnames(AOther@geno) = dimnames(W@geno)
+# Set dimnames
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
+dimnames(AInner@geno) = dimnames(AOuter@geno) = dimnames(AOther@geno) = dimnames(W@geno)
+dimnames(AInner@pheno) = dimnames(AOuter@pheno) = dimnames(AOther@pheno) = dimnames(W@pheno)
+dimnames(AInner@map) = dimnames(AOuter@map) = dimnames(AOther@map) = dimnames(W@map)
 
-# save converted data in three local ancestry matrices with 0/1 entries
-
+# Save converted data in three local ancestry matrices with 0/1 entries
 save(AInner, file = paste0("Data/loter/Run ", loter_run,
                            "/AInner/AInner.RData"))
 save(AOuter, file = paste0("Data/loter/Run ", loter_run,
