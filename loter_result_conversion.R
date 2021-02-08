@@ -2,14 +2,15 @@ library(data.table)
 library(BGData)
 source("My_R_code/file_backed_mat.R")
 
+# Must have already run W_setup.R
+
 loter_run = 1
 
 # Find purebred and admixed populations  
 get_pop = function(group) {
   groupFile = file(paste0("Data/loter/Run ", loter_run, "/Input/", group, "_phased.vcf.gz"),
                    open = "r")
-  groupLine = scan(groupFile, nlines = 1, skip = 8,
-                   what = character(), quiet = TRUE)
+  groupLine = scan(groupFile, nlines = 1, skip = 8, what = character(), quiet = TRUE)
   close(groupFile)
   return(groupLine[-(1:9)])
 }
@@ -36,13 +37,11 @@ AOuter = BGData(
                               folderOut = paste0("Data/loter/Run ", loter_run, "/AOuter"),
                               outputType = "boolean"),
   pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize)))
-
 AInner = BGData(
   geno = initFileBackedMatrix(2 * popSize, numSNPs,
                               folderOut = paste0("Data/loter/Run ", loter_run, "/AInner"),
                               outputType = "boolean"),
   pheno = data.frame(ind = rep(pop, 2), h = rep(c(1, 2), each = popSize)))
-
 AOther = BGData(
   geno = initFileBackedMatrix(2 * popSize, numSNPs,
                               folderOut = paste0("Data/loter/Run ", loter_run, "/AOther"),
@@ -100,9 +99,6 @@ dimnames(AInner@pheno) = dimnames(AOuter@pheno) = dimnames(AOther@pheno) = dimna
 dimnames(AInner@map) = dimnames(AOuter@map) = dimnames(AOther@map) = dimnames(W@map)
 
 # Save converted data in three local ancestry matrices with 0/1 entries
-save(AInner, file = paste0("Data/loter/Run ", loter_run,
-                           "/AInner/AInner.RData"))
-save(AOuter, file = paste0("Data/loter/Run ", loter_run,
-                           "/AOuter/AOuter.RData"))
-save(AOther, file = paste0("Data/loter/Run ", loter_run,
-                           "/AOther/AOther.RData"))
+save(AInner, file = paste0("Data/loter/Run ", loter_run, "/AInner/AInner.RData"))
+save(AOuter, file = paste0("Data/loter/Run ", loter_run, "/AOuter/AOuter.RData"))
+save(AOther, file = paste0("Data/loter/Run ", loter_run, "/AOther/AOther.RData"))

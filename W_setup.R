@@ -1,20 +1,16 @@
-suppressMessages({
 if (!require(R.utils)) install.packages("R.utils")
 library(R.utils)
 if (!require(data.table)) install.packages("data.table")
 library(data.table)
-})
   
 source("My_R_code/file_backed_mat.R")
 
-  
 loter_run = 1
 
 get_pop = function(group) {
   groupFile = file(paste0("Data/loter/Run ", loter_run, "/Input/", group, "_phased.vcf.gz"),
                    open = "r")
-  groupLine = scan(groupFile, nlines = 1, skip = 8,
-                   what = character(), quiet = TRUE)
+  groupLine = scan(groupFile, nlines = 1, skip = 8, what = character(), quiet = TRUE)
   close(groupFile)
   return(groupLine[-(1:9)])
 }

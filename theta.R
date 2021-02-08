@@ -15,14 +15,11 @@ loter_run = 1
 
 # The parallel implementation in BGData does not work on Windows.
 # So if ran on Windows, use only one core (slow), otherwise use all.
-numCores = ifelse(Sys.info()[['sysname']] == "Windows", 
-               1, detectCores())
+numCores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run,
-                          "/W/W.RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run, 
-                          "/A", group, "/A", group, ".RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/A", group, "/A", group, ".RData"))
 
 #################### Useful vectors ###############################
 
