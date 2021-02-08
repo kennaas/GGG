@@ -1,6 +1,8 @@
-library(Matrix)
-library(BGData)
-library(ff)
+suppressMessages( {
+  library(Matrix)
+  library(BGData)
+  library(ff)
+})
 
 # Help functions to create custom file backed matrices
 
