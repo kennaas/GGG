@@ -6,41 +6,22 @@ loter_run = 3
 
 # Find Reference population and admixed individuals 
 
-innerFile = file(paste0("Data/loter/Run ", loter_run,
-                        "/Loter input ", loter_run,
-                        "/inner_phased", loter_run, ".vcf.gz"), 
-                 open = "r")
-innerLine  = scan(innerFile, nlines = 1, skip = 8,
-                  what = character(), quiet = TRUE)
-close(innerFile)
-innerInds = innerLine[-(1:9)]
-
-outerFile = file(paste0("Data/loter/Run ", loter_run,
-                        "/Loter input ", loter_run,
-                        "/outer_phased", loter_run, ".vcf.gz"), 
-                 open = "r")
-outerLine  = scan(outerFile, nlines = 1, skip = 8,
-                  what = character(), quiet = TRUE)
-close(outerFile)
-outerInds = outerLine[-(1:9)]
-
-otherFile = file(paste0("Data/loter/Run ", loter_run,
-                        "/Loter input ", loter_run,
-                        "/other_phased", loter_run, ".vcf.gz"), 
-                 open = "r")
-otherLine  = scan(otherFile, nlines = 1, skip = 8,
-                  what = character(), quiet = TRUE)
-close(otherFile)
-otherInds = otherLine[-(1:9)]
-
-admixedFile = file(paste0("Data/loter/Run ", loter_run,
+get_pop = function(group) {
+  groupFile = file(paste0("Data/loter/Run ", loter_run,
                           "/Loter input ", loter_run,
-                          "/admixed_phased", loter_run, ".vcf.gz"), 
-                   open = "r")
-admixedLine  = scan(admixedFile, nlines = 1, skip = 8,
-                  what = character(), quiet = TRUE)
-close(admixedFile)
-admixedInds = admixedLine[-(1:9)]
+                          "/", group, "_phased", loter_run,
+                          ".vcf.gz"), open = "r")
+  groupLine = scan(groupFile, nlines = 1, skip = 8,
+                   what = character(), quiet = TRUE)
+  close(groupFile)
+  return(groupLine[-(1:9)])
+}
+
+innerInds = get_pop("inner")
+outerInds = get_pop("outer")
+otherInds = get_pop("other")
+admixedInds = get_pop("admixed")
+
 SNPs = fread(file = paste0("Data/loter/Run ", loter_run,
                            "/Loter input ", loter_run,
                            "/admixed_phased", loter_run,".vcf.gz"),
@@ -58,6 +39,7 @@ AOuter = BGData(
                                                  "/AOuter"),
                               outputType = "boolean"),
   pheno = data.frame(ID = inds))
+
 AInner = BGData(
   geno = initFileBackedMatrix(length(inds), 2 * length(SNPs),
                               folderOut = paste0("Data/loter/Run ",
@@ -65,6 +47,7 @@ AInner = BGData(
                                                  "/AInner"),
                               outputType = "boolean"),
   pheno = data.frame(ID = inds))
+
 AOther = BGData(
   geno = initFileBackedMatrix(length(inds), 2 * length(SNPs),
                               folderOut = paste0("Data/loter/Run ",
@@ -77,9 +60,9 @@ AOther = BGData(
 
 i = c(1, length(innerInds))
 for (row in i[1]:i[2]) {
-  AOuter@geno[row,] = AOther@geno[row,] = rep(0, 2 * length(SNPs))
+  AOuter@geno[row,] = AOther@geno[row, ] = rep(0, 2 * length(SNPs))
   AInner@geno[row,] = rep(1, 2 * length(SNPs))
-  print(row)
+  # print(row)
 }
 
 # For outer rows, set outer LA to 1, inner and other to 0
@@ -87,9 +70,9 @@ for (row in i[1]:i[2]) {
 i = i + c(length(innerInds), length(outerInds))
 
 for (row in i[1]:i[2]) {
-  AInner@geno[row, ] = AOther@geno[row,] = rep(0, 2 * length(SNPs))
+  AInner@geno[row, ] = AOther@geno[row, ] = rep(0, 2 * length(SNPs))
   AOuter@geno[row, ] = rep(1, 2 * length(SNPs))
-  print(row)
+  # print(row)
 }
 
 # For other rows, set outer LA to 1, inner and outer to 0
@@ -99,7 +82,7 @@ i = i + c(length(outerInds), length(otherInds))
 for (row in i[1]:i[2]) {
   AInner@geno[row, ] = AOuter@geno[row,] = rep(0, 2 * length(SNPs))
   AOther@geno[row, ] = rep(1, 2 * length(SNPs))
-  print(row)
+  # print(row)
 }
 i = i + c(length(otherInds), length(admixedInds))
 
@@ -126,7 +109,7 @@ for (row in i[1]:i[2]) {
   AOuter@geno[row, SNPs2] = ifelse(line2 == 0, 1, 0)
   AInner@geno[row, SNPs2] = ifelse(line2 == 1, 1, 0)
   AOther@geno[row, SNPs2] = ifelse(line2 == 2, 1, 0)
-  print(row)
+  # print(row)
 }
 close(admixedFile)
 
