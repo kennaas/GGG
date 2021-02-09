@@ -52,8 +52,6 @@ gammaDenomVR21 = t(gammaDenomVR12)
 # Sum the four matrix products
 gammaDen = gammaDenomVR11 + gammaDenomVR12 + gammaDenomVR21 + gammaDenomVR22
 
-print("zero?")
-any(gammaDen == 0)
 gammaDen = ifelse(gammaDen == 0, 1e-12, gammaDen)
 
 save(gammaDen, file = paste0("Data/loter/Run ", loter_run, "/gammaDenominator", group, ".RData"))
