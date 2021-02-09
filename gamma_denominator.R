@@ -30,8 +30,6 @@ rm(p, pInner, pOuter, pOther)
 #################### Useful vectors ###############################
 
 numInds = dim(get(paste0("A", group))@geno)[1] / 2
-numSNPs = dim(get(paste0("A", group))@geno)[2]
-inds = as.character(get(paste0("A", group))@pheno$ind[1:numInds])
 
 ####################### Find gamma denominator ####################
 
