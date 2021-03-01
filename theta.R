@@ -9,8 +9,7 @@ source("My_R_code/file_backed_mat.R")
 
 ####################### Setup #####################################
 
-
-group = "Inner"
+group = "Other"
 loter_run = 1
 
 # The parallel implementation in BGData does not work on Windows.
@@ -21,29 +20,28 @@ load.BGData(file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
 
 load.BGData(file = paste0("Data/loter/Run ", loter_run, "/A", group, "/A", group, ".RData"))
 
-#################### Useful vectors ###############################
-
 numInds = dim(W@geno)[1] / 2
 numSNPs = dim(W@geno)[2]
 inds = as.character(W@pheno$ind[1:numInds])
 
 ###################################################################
 
-
+passes = round(numSNPs / 5000 / numCores)
+getGChunks = ceiling(numSNPs / (passes * numCores))
 print("getG() for h=1")
 theta_11 = getG(get(paste0("A", group))@geno, i = 1:numInds,
                 center = FALSE, scale = FALSE, scaleG = FALSE,
-                nCores = numCores, verbose = TRUE)
+                nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 print("getG() for h=2")
 theta_22 = getG(get(paste0("A", group))@geno, i = (numInds + 1):(2 * numInds),
                 center = FALSE, scale = FALSE, scaleG = FALSE,
-                nCores = numCores, verbose = TRUE)
+                nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 print("getG() for cross-comparison")
 theta_12 = getG(get(paste0("A", group))@geno, i = 1:numInds, i2 = (numInds + 1):(2 * numInds),
                 center = FALSE, scale = FALSE, scaleG = FALSE,
-                nCores = numCores, verbose = TRUE)
+                nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 theta_21 = t(theta_12)
 
