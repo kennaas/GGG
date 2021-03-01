@@ -11,11 +11,11 @@ source("My_R_code/file_backed_mat.R")
 
 ##################### Settings ####################################
 
-group = "Inner"
+group = "Other"
 loter_run = 1
 # The parallel implementation in BGData does not work on Windows.
 # So if ran on Windows, use only one core (slow), otherwise use all.
-cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
+numCores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
 
 ##################### Load data ###################################
 
@@ -27,23 +27,23 @@ p = get(paste0("p", group))
 pScaling = 1 / sqrt(p * (1 - p))
 rm(p, pInner, pOuter, pOther)
 
-#################### Useful vectors ###############################
-
 numInds = dim(get(paste0("A", group))@geno)[1] / 2
+numSNPs = dim(get(paste0("A", group))@geno)[2]
 
 ####################### Find gamma denominator ####################
-
+passes = round(numSNPs / 5000 / numCores)
+getGChunks = ceiling(numSNPs / (passes * numCores))
 gammaDenomVR11 = getG(get(paste0("A", group))@geno, i = 1:numInds,
                       center = FALSE, scale = pScaling, scaleG = FALSE,
-                      nCores = cores, verbose = TRUE)
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 gammaDenomVR22 = getG(get(paste0("A", group))@geno, i = (numInds + 1):(2 * numInds),
                       center = FALSE, scale = pScaling, scaleG = FALSE,
-                      nCores = cores, verbose = TRUE)
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 gammaDenomVR12 = getG(get(paste0("A", group))@geno, i = 1:numInds, i2 = (numInds + 1):(2 * numInds),
                       center = FALSE, scale = pScaling, scaleG = FALSE,
-                      nCores = cores, verbose = TRUE)
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
 gammaDenomVR21 = t(gammaDenomVR12)
 
