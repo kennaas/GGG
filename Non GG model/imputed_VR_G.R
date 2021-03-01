@@ -2,42 +2,39 @@ library(Matrix)
 library(data.table)
 library(BGData)
 library(parallel)
+library(tictoc)
 source("My_R_code/file_backed_mat.R")
 
 loter_run = 1
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run, 
-                          "/W/W.RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
 
-cores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
-numInds = dim(W@geno)[1]
+numCores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
+numInds = dim(W@geno)[1] / 2
 numSNPs = dim(W@geno)[2]
-inds = W@pheno$ID
-SNPs = colnames(W@geno)
+inds = as.character(W@pheno$indS)[1:numInds]
 
-SNPs1 = seq(1, by = 2, to = 2 * numSNPs)
-SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
+passes = round(numSNPs / 5000 / numCores)
+getGChunks = ceiling(numSNPs / (passes * numCores))
 
-########################### Finding p #############################
+p = chunkedApply(W@geno, 2, sum, 
+                 nCores = numCores, verbose = TRUE, chunkSize = getGChunks) / (2 * numInds)
 
-p_numerator = chunkedApply(W@geno, 2, sum,
-                           nCores = cores, verbose = TRUE)
-p_numerator =
-  unname(tapply(p_numerator,
-                (seq_along(p_numerator) - 1) %/% 2, sum))
+G_11 = getG(W@geno, i = 1:numInds,
+            center = p, scale = FALSE, scaleG = FALSE,
+            nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-p = p_numerator / (2 * numInds)
+G_22 = getG(W@geno, i = (numInds + 1):(2 * numInds),
+            center = p, scale = FALSE, scaleG = FALSE,
+            nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-###################### Find G #####################################
+G_12 = getG(W@geno, i = 1:numInds, i2 = (numInds + 1):(2 * numInds),
+            center = p, scale = FALSE, scaleG = FALSE,
+            nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-G_numerator = getG(W@geno, center = rep(p, each = 2), scale = FALSE,
-         scaleG = FALSE, nCores = cores, verbose = TRUE)
+G_21 = t(G_12)
 
-# G_denominator = sum(p * (1 - p))
-G_denominator = 2 * sum(p * (1 - p)) # mutliply by 2 because haplotype-level?
+GRM = (G_11 + G_22 + G_12 + G_21) / (2 * sum(p * (1 - p)))
+dimnames(GRM) = list(inds, inds)
 
-GRM = G_numerator / G_denominator
-dimnames(GRM)[[1]] = dimnames(GRM)[[2]] = inds
-
-save(GRM, file = paste0("Runs/GRMs/GRM_vanRaden_imputed&phased",
-                        loter_run , ".RData"))
+save(GRM, file = paste0("Runs/GRMs/GRM_vanRaden_imputed&phased", loter_run , ".RData"))
