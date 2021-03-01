@@ -7,18 +7,8 @@ if (!require(BGData)) install.packages("BGData")
 library(BGData)
 if (!require(parallel)) install.packages("parallel")
 library(parallel)
-if (!require(remotes)) install.packages("remotes")
-library(remotes)
-if (!require(fs)) install.packages("fs")
-library(fs)
-
-packageVersion("BGData")
-old_lib = ifelse(Sys.info()[['sysname']] == "Windows",
-                 path_home_r("R/win-library/old-versions/"),
-                 "/usr/local/lib/R/old-versions/")
-# One time:
-# install_version("BGData", version = "1.0", lib = old_lib)
-packageVersion("BGData")
+if (!require(tictoc)) install.packages("tictoc")
+library(tictoc)
 source("My_R_code/file_backed_mat.R")
 
 ##################### Settings ####################################
@@ -27,78 +17,60 @@ group = "Other"
 loter_run = 1
 # The parallel implementation in BGData does not work on Windows.
 # So if ran on Windows, use only one core (slow), otherwise use all.
-cores = ifelse(Sys.info()[['sysname']] == "Windows", 
-               1, detectCores())
+numCores = ifelse(Sys.info()[['sysname']] == "Windows", 1, detectCores())
 
 ##################### Load data ###################################
 
-# Local ancestry data for the group in question
-load.BGData(file = paste0("Data/loter/Run ", loter_run,
-                          "/W/W.RData"))
 # Haplotype data
-load.BGData(file = paste0("Data/loter/Run ", loter_run, 
-                          "/A", group, "/A", group, ".RData"))
+# load.BGData(file = paste0("Data/loter/Run ", loter_run, "/W/W.RData"))
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run, 
-                          "/V1", group, "/V1.RData"))
+# Local ancestry data for the group in question
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/A", group, "/A", group, ".RData"))
 
-load.BGData(file = paste0("Data/loter/Run ", loter_run, 
-                          "/V2", group, "/V2.RData"))
+load.BGData(file = paste0("Data/loter/Run ", loter_run, "/WA", group, "/WA", group, ".RData"))
 
 load(file = paste0("Runs/AlleleFreqs/alleleFreqs", loter_run, ".RData"))
 p = get(paste0("p", group))
+rm(pInner, pOuter, pOther)
 
-#################### Useful vectors ###############################
+numInds = dim(get(paste0("A", group))@geno)[1] / 2
+numSNPs = dim(get(paste0("A", group))@geno)[2]
 
-numInds = dim(W@geno)[1]
-numSNPs = dim(W@geno)[2] / 2
-inds = W@pheno$ID
-# Indices
-SNPs1 = seq(1, by = 2, to = 2 * numSNPs)
-SNPs2 = seq(2, by = 2, to = 2 * numSNPs)
+##################### Create temporary V matrix ##################
 
+V = BGData(
+  pheno = get(paste0("A", group))@pheno,
+  geno = initFileBackedMatrix(2 * numInds, numSNPs,
+                              folderOut = paste0("Data/loter/Run ", loter_run, "/V", group),
+                              outputType = "double"))
+
+V_func = function(row) {
+  V@geno[row, ] = get(paste0("WA", group))@geno[row, ] - get(paste0("A", group))@geno[row, ] * p
+  return(NULL)
+}
+
+trash = mclapply(1:(2 * numInds), V_func, mc.cores = numCores)
+rm(trash)
 ##################### Find gamma numerator ########################
 
+passes = round(numSNPs / 5000 / numCores)
+getGChunks = ceiling(numSNPs / (passes * numCores))
 # Compute four matrix products: all permuations of h=1 and h=2
+gammaNumerVR11 = getG(V@geno, i = 1:numInds,
+                      center = FALSE, scale = FALSE, scaleG = FALSE,
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-gamma_numerator_VR_11 = getG(V1@geno,
-                             center = FALSE, scale = FALSE,
-                             scaleG = FALSE, nCores = cores,
-                             verbose = TRUE)
+gammaNumerVR22 = getG(V@geno, i = (numInds + 1):(2 * numInds),
+                      center = FALSE, scale = FALSE, scaleG = FALSE,
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-save(gamma_numerator_VR_11, file = "safe1.RData")
+gammaNumerVR12 = getG(V@geno, i = 1:numInds, i2 = (numInds + 1):(2 * numInds),
+                      center = FALSE, scale = FALSE, scaleG = FALSE,
+                      nCores = numCores, verbose = TRUE, chunkSize = getGChunks)
 
-gamma_numerator_VR_22 = getG(V2@geno,
-                             center = FALSE, scale = FALSE,
-                             scaleG = FALSE, nCores = cores,
-                             verbose = TRUE)
-
-save(gamma_numerator_VR_22, file = "safe2.RData")
-
-# A desired function is only in old version of BGData
-print("Changing version")
-detach("package:BGData")
-library("BGData", lib.loc = old_lib)
-packageVersion("BGData")
-
-# Split this computation in two to make it easier memory-wise
-print("starting tcrossprod_parallel")
-b1 = tcrossprod_parallel(x = V1@geno, 
-                         y = V2@geno[1:(numInds %/% 2), ],
-                         nCores = cores)
-b2 = tcrossprod_parallel(x = V1@geno, 
-                         y = V2@geno[(numInds %/% 2 + 1):numInds, ],
-                         nCores = cores)
-gamma_numerator_VR_12 = cbind(b1, b2)
-print("finished, doing transpose")
-gamma_numerator_VR_21 = t(gamma_numerator_VR_12)
-print("finished")
+gammaNumerVR21 = t(gammaNumerVR12)
 
 # Sum the four matrix products
-gamma_num = 
-  gamma_numerator_VR_11 + gamma_numerator_VR_12 +
-  gamma_numerator_VR_21 + gamma_numerator_VR_22
+gammaNumer = gammaNumerVR11 + gammaNumerVR12 + gammaNumerVR21 + gammaNumerVR22
 
-save(gamma_num, 
-     file = paste0("Data/loter/Run ", loter_run, "/gammaNumerator", group, ".RData"))
-
+save(gammaNumer, file = paste0("Data/loter/Run ", loter_run, "/gammaNumerator", group, ".RData"))
